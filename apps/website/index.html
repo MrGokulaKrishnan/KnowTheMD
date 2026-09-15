@@ -13,8 +13,12 @@
       name="keywords"
       content="Markdown reader, Markdown editor, Markdown editor for Windows, Markdown reader for Windows, Markdown editor for Mac, Markdown editor for Linux, Markdown editor Android, Markdown editor iOS, Markdown application, MD file reader, MD file editor, Open Markdown files, Markdown to PDF, Markdown preview, Markdown writing app"
     />
-    <meta name="robots" content="index, follow" />
     <link rel="canonical" href="https://knowthemd.com" />
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#030712" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="KnowTheMD" />
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
@@ -82,6 +86,13 @@
   </head>
   <body class="bg-[#030712] text-slate-100 antialiased selection:bg-cyan-500/30 selection:text-cyan-200">
     <div id="root"></div>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').catch(() => {});
+        });
+      }
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

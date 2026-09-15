@@ -120,7 +120,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
             onClick={() => onNavigate('download')}
             className="w-full sm:w-auto text-base px-8 py-3.5"
           >
-            All Platforms (.exe, .msi, .apk, .dmg)
+            All Platforms & Downloads
           </GlassButton>
         </div>
 

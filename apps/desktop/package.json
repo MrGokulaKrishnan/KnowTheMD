@@ -1,11 +1,12 @@
 {
   "name": "knowthemd-desktop",
   "version": "1.0.0",
-  "private": true,
+  "main": "electron-main.cjs",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "package:win": "electron-packager . KnowTheMD --platform=win32 --arch=x64 --out=release-builds --overwrite"
   },
   "dependencies": {
     "@knowthemd/editor": "*",
@@ -16,7 +17,9 @@
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
+    "@electron/packager": "^18.4.4",
     "@vitejs/plugin-react": "^4.3.4",
+    "electron": "^41.7.1",
     "vite": "^6.4.3"
   }
 }

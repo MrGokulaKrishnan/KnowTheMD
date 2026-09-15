@@ -131,7 +131,7 @@ export const DownloadPage: React.FC = () => {
         </div>
         To verify your downloaded binary on Windows, run{' '}
         <code className="text-cyan-300 bg-slate-900 px-1 py-0.5 rounded">
-          CertUtil -hashfile KnowTheMD.msi SHA256
+          CertUtil -hashfile KnowTheMD_Windows_x64.zip SHA256
         </code>
         . On macOS/Linux, run{' '}
         <code className="text-cyan-300 bg-slate-900 px-1 py-0.5 rounded">

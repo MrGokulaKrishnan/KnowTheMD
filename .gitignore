@@ -1,4 +1,4 @@
-﻿# Dependencies
+# Dependencies
 node_modules/
 /.pnp
 .pnp.js
@@ -9,6 +9,12 @@ dist-ssr/
 build/
 out/
 *.local
+release-builds/
+.gradle/
+**/android/.gradle/
+**/android/app/build/
+**/android/build/
+**/android/local.properties
 
 # Executable installers & binary archives
 *.exe

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">KnowTheMD</string>
+    <string name="title_activity_main">KnowTheMD</string>
+    <string name="package_name">com.knowthemd.mobile</string>
+    <string name="custom_url_scheme">com.knowthemd.mobile</string>
+</resources>
