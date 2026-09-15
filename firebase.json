@@ -1,0 +1,24 @@
+﻿{
+  "hosting": {
+    "public": "apps/website/dist",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**",
+      "**/downloads/**",
+      "**/*.exe",
+      "**/*.msi",
+      "**/*.dmg",
+      "**/*.AppImage",
+      "**/*.deb",
+      "**/*.apk",
+      "**/*.ipa"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  }
+}

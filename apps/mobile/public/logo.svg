@@ -1,0 +1,20 @@
+<svg width="320" height="320" viewBox="0 0 320 320" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="brandGrad" x1="60" y1="30" x2="280" y2="280" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#7EE7F8" />
+      <stop offset="25%" stop-color="#00E5FF" />
+      <stop offset="60%" stop-color="#00A3FF" />
+      <stop offset="100%" stop-color="#084282" />
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="0" stdDeviation="8" flood-color="#00F0FF" flood-opacity="0.45" />
+    </filter>
+  </defs>
+  <rect width="320" height="320" rx="64" fill="#030712" />
+  <g filter="url(#glow)">
+    <rect x="48" y="200" width="18" height="18" rx="3" fill="url(#brandGrad)" />
+    <path d="M 80 46 L 108 128 L 128 78 L 142 78 L 162 136 L 190 274 L 172 274 L 150 178 L 134 220 L 122 220 L 100 156 L 80 220 L 62 220 L 62 88 Z" fill="url(#brandGrad)" />
+    <path d="M 172 78 L 242 78 C 278 78 300 98 300 134 C 300 170 278 190 242 190 L 204 190 L 204 220 L 242 220 C 296 220 326 186 326 134 C 326 82 296 48 242 48 L 172 48 Z" fill="url(#brandGrad)" />
+    <polygon points="218,98 274,98 246,134" fill="url(#brandGrad)" />
+  </g>
+</svg>

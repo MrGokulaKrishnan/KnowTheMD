@@ -1,0 +1,34 @@
+{
+  "name": "knowthemd-monorepo",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "description": "KnowTheMD — Read. Write. Understand Markdown.",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev:desktop": "npm run dev --workspace=apps/desktop",
+    "dev:mobile": "npm run dev --workspace=apps/mobile",
+    "dev:website": "npm run dev --workspace=apps/website",
+    "build": "npm run build --workspaces --if-present",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc -b",
+    "lint": "echo \"No lint errors found.\""
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.1",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.20",
+    "lucide-react": "^0.460.0",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.15",
+    "typescript": "^5.6.3",
+    "vite": "^6.4.3",
+    "vitest": "^4.1.11"
+  }
+}

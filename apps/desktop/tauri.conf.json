@@ -1,0 +1,38 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "KnowTheMD",
+  "version": "1.0.0",
+  "identifier": "com.knowthemd.app",
+  "build": {
+    "frontendDist": "../dist",
+    "devUrl": "http://localhost:3000"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "KnowTheMD",
+        "width": 1200,
+        "height": 800,
+        "minWidth": 800,
+        "minHeight": 600,
+        "resizable": true,
+        "fullscreen": false
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; img-src 'self' data: https: file:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.tailwindcss.com; font-src 'self' https://fonts.gstatic.com data:;"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": ["public/logo.svg"],
+    "fileAssociations": [
+      {
+        "ext": ["md", "markdown", "mdown", "mkdn", "mkd"],
+        "name": "Markdown Document",
+        "role": "Editor"
+      }
+    ]
+  }
+}

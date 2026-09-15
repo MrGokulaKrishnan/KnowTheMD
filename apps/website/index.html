@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en" class="dark scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/jpeg" href="/logo.jpg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>KnowTheMD — Read. Write. Understand Markdown.</title>
+    <meta
+      name="description"
+      content="A fast, beautiful, offline-first Markdown reader and editor built for Windows, macOS, Linux, Android, and iOS. Featuring a liquid glass design, live preview, and distraction-free reading."
+    />
+    <meta
+      name="keywords"
+      content="Markdown reader, Markdown editor, Markdown editor for Windows, Markdown reader for Windows, Markdown editor for Mac, Markdown editor for Linux, Markdown editor Android, Markdown editor iOS, Markdown application, MD file reader, MD file editor, Open Markdown files, Markdown to PDF, Markdown preview, Markdown writing app"
+    />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://knowthemd.com" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://knowthemd.com/" />
+    <meta property="og:title" content="KnowTheMD — Read. Write. Understand Markdown." />
+    <meta
+      property="og:description"
+      content="A fast, beautiful, offline-first Markdown reader and editor built for Windows, macOS, Linux, Android, and iOS."
+    />
+    <meta property="og:image" content="https://knowthemd.com/og-banner.png" />
+
+    <!-- Twitter / X -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://knowthemd.com/" />
+    <meta property="twitter:title" content="KnowTheMD — Read. Write. Understand Markdown." />
+    <meta
+      property="twitter:description"
+      content="A fast, beautiful, offline-first Markdown reader and editor built for Windows, macOS, Linux, Android, and iOS."
+    />
+    <meta property="twitter:image" content="https://knowthemd.com/og-banner.png" />
+
+    <!-- SoftwareApplication Schema.org JSON-LD -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "KnowTheMD",
+        "operatingSystem": "Windows 10/11, macOS 12+, Linux, Android 11+, iOS 16+",
+        "applicationCategory": "ProductivityApplication",
+        "offers": {
+          "@type": "Offer",
+          "price": "0.00",
+          "priceCurrency": "USD"
+        },
+        "description": "Read. Write. Understand Markdown. A fast, modern cross-platform Markdown reader and editor.",
+        "softwareVersion": "1.0.0"
+      }
+    </script>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              cyan: {
+                400: '#00F0FF',
+                500: '#00D2FF',
+              },
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@300;400;500;600;700;800&display=swap');
+      body {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background-color: #030712;
+        color: #F8FAFC;
+        overflow-x: hidden;
+      }
+    </style>
+  </head>
+  <body class="bg-[#030712] text-slate-100 antialiased selection:bg-cyan-500/30 selection:text-cyan-200">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
