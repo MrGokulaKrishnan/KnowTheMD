@@ -45,8 +45,8 @@ export interface PlatformRelease {
 
 // ─── Release Metadata ────────────────────────────────────────────────────────
 
-export const APP_VERSION = '1.0.0';
-export const RELEASE_DATE = 'September 15, 2026';
+export const APP_VERSION = 'v1.0';
+export const RELEASE_DATE = 'September 18, 2026';
 
 // ─── Platform Releases ───────────────────────────────────────────────────────
 
@@ -148,19 +148,19 @@ export const RELEASES: PlatformRelease[] = [
       {
         arch: 'Android Universal APK (.apk)',
         format: '.apk',
-        fileSize: '4.1 MB',
-        fileName: 'KnowTheMD-1.0.0-android.apk',
-        downloadUrl: '/downloads/KnowTheMD-1.0.0-android.apk',
-        sha256: '3c7812eb8318f5b45fccf9ea70eea9490f449850269fb81fc0ff92b7d62750d9',
+        fileSize: '4.7 MB',
+        fileName: 'KnowTheMD-v1.0-android.apk',
+        downloadUrl: '/downloads/KnowTheMD-v1.0-android.apk',
+        sha256: '4ba8758a82b612f3a572b0547a44268e7e85c151b513e270d2cbd5c53c91a4ac',
         available: true,
       },
       {
         arch: 'Android Package Archive (.zip)',
         format: '.zip',
-        fileSize: '4.0 MB',
-        fileName: 'KnowTheMD-1.0.0-android.zip',
-        downloadUrl: '/downloads/KnowTheMD-1.0.0-android.zip',
-        sha256: '6fb11749ffb5083a1d199e41ba346c114ab2cce831bcb167499f15707eb5ef30',
+        fileSize: '4.4 MB',
+        fileName: 'KnowTheMD-v1.0-android.zip',
+        downloadUrl: '/downloads/KnowTheMD-v1.0-android.zip',
+        sha256: 'dd04e9a890609d263364d1ef4354fe690c5b1e0112301d4a1471bc02b20f6966',
         available: true,
       },
     ],

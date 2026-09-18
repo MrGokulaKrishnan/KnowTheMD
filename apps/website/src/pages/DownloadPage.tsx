@@ -409,11 +409,11 @@ export const DownloadPage: React.FC = () => {
             <p>
               Verify on macOS/Linux:{' '}
               <code className="text-cyan-300 bg-slate-900 px-1 py-0.5 rounded">
-                sha256sum KnowTheMD-1.0.0-android.apk
+                sha256sum KnowTheMD-v1.0-android.apk
               </code>
               {' '}— or on Windows:{' '}
               <code className="text-cyan-300 bg-slate-900 px-1 py-0.5 rounded">
-                CertUtil -hashfile KnowTheMD-1.0.0-android.apk SHA256
+                CertUtil -hashfile KnowTheMD-v1.0-android.apk SHA256
               </code>
             </p>
           )}

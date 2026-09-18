@@ -475,7 +475,7 @@ export const MobileApp: React.FC = () => {
                 </div>
                 <div className="flex items-center justify-between text-[11px] text-slate-400">
                   <span>Current Version</span>
-                  <span className="font-mono text-cyan-300">v1.0.0</span>
+                  <span className="font-mono text-cyan-300">v1.0</span>
                 </div>
 
                 {updateChecker.state === 'available' ? (

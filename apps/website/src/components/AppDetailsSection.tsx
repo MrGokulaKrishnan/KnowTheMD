@@ -213,7 +213,7 @@ export const AppDetailsSection: React.FC = () => {
             What's new
           </h3>
           <span className="text-xs font-mono text-cyan-400 bg-cyan-500/10 px-2.5 py-1 rounded-full border border-cyan-500/20">
-            v{APP_VERSION} • {RELEASE_DATE}
+            {APP_VERSION.startsWith('v') ? APP_VERSION : `v${APP_VERSION}`} • {RELEASE_DATE}
           </span>
         </div>
 
@@ -413,7 +413,7 @@ export const AppDetailsSection: React.FC = () => {
 
             <div>
               <span className="text-slate-500 font-medium block">Update size</span>
-              <span className="text-white font-mono font-semibold text-sm">4.12 MB (Android APK)</span>
+              <span className="text-white font-mono font-semibold text-sm">4.7 MB (Android APK)</span>
             </div>
           </div>
 

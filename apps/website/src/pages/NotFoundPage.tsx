@@ -51,7 +51,7 @@ export const NotFoundPage: React.FC<NotFoundPageProps> = ({ onNavigate }) => {
       </div>
 
       <div className="mt-16 text-xs text-slate-500 font-mono">
-        KnowTheMD v1.0.0 • Offline-First Markdown Architecture
+        KnowTheMD v1.0 • Offline-First Markdown Architecture
       </div>
     </div>
   );

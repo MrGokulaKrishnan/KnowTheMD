@@ -5,6 +5,31 @@ import { Sparkles, Shield, Wrench, PlusCircle } from 'lucide-react';
 export const ChangelogPage: React.FC = () => {
   const releases = [
     {
+      version: 'v1.0',
+      date: 'September 18, 2026',
+      title: 'Universal Device Compatibility & Play Store Release',
+      highlights: 'APK Signature Scheme v2 & v3 verification, 4-byte zipaligning, square 10% radius icon, and Play Store style app details.',
+      added: [
+        'Full APK Signature Scheme v2 & v3 signing via apksigner for Android 7.0 up to Android 15+.',
+        'Square application icon with pixel-perfect 10% corner radius across all launcher densities.',
+        'Google Play Store styled App Details section with live device compatibility testing.',
+        'Direct multi-platform browser downloads bypassing third-party redirects.',
+        'Background Over-The-Air (OTA) update system with Restart to Update banner.',
+      ],
+      changed: [
+        'Standardized release version to v1.0 across website, mobile, and desktop packages.',
+        'Optimized compileSdkVersion 36 with targetSdkVersion 34 for maximum device installation reliability.',
+      ],
+      fixed: [
+        'Resolved Android package installer failure on modern Android phones by enabling APK Signature Scheme v2 & v3.',
+        'Fixed 4-byte zipalign integrity across APK distribution archives.',
+      ],
+      security: [
+        'Hardened APK package signature using both Scheme v2 and Scheme v3.',
+        'Validated 4-byte zipalign integrity neutralizing package tampering vulnerabilities.',
+      ],
+    },
+    {
       version: '1.0.0',
       date: 'September 14, 2026',
       title: 'Production Core Launch',
@@ -140,7 +165,7 @@ export const ChangelogPage: React.FC = () => {
             )}
 
             {/* Security */}
-            {rel.security.length > 0 && (
+            {rel.security && rel.security.length > 0 && (
               <div>
                 <h4 className="text-xs font-semibold uppercase tracking-wider text-rose-400 flex items-center gap-1.5 mb-2">
                   <Shield className="w-4 h-4" /> Security

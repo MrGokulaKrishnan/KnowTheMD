@@ -27,7 +27,7 @@ export const SupportPage: React.FC = () => {
     },
     {
       q: 'Why does Android warn about "Installing from unknown sources"?',
-      a: 'The KnowTheMD APK is distributed directly as an open-source artifact without Google Play Store intermediation. Android displays a standard security prompt for any direct APK installation. You can safely verify the binary SHA-256 hash using `CertUtil -hashfile KnowTheMD-1.0.0-android.apk SHA256` or `sha256sum` before installing.',
+      a: 'The KnowTheMD APK is distributed directly as an open-source artifact without Google Play Store intermediation. Android displays a standard security prompt for any direct APK installation. You can safely verify the binary SHA-256 hash using `CertUtil -hashfile KnowTheMD-v1.0-android.apk SHA256` or `sha256sum` before installing.',
     },
     {
       q: 'Does KnowTheMD collect telemetry, diagnostics, or personal data?',

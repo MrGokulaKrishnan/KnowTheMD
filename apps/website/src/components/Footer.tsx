@@ -90,7 +90,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onOpenAbout }) => {
             </li>
             <li>
               <button onClick={() => onNavigate('changelog')} className="hover:text-cyan-400">
-                Changelog (v1.0.0)
+                Changelog (v1.0)
               </button>
             </li>
             <li>

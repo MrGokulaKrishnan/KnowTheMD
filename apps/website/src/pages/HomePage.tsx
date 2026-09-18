@@ -80,7 +80,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
         {/* Badge */}
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-900/80 border border-cyan-500/30 text-cyan-300 text-xs font-semibold mb-8 shadow-[0_0_15px_rgba(0,240,255,0.15)] animate-fade-in">
           <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
-          <span>KnowTheMD Version 1.0.0 Now Available</span>
+          <span>KnowTheMD Version 1.0 Now Available</span>
         </div>
 
         {/* Hero Title */}
@@ -301,7 +301,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
             icon={<Download className="w-5 h-5" />}
             onClick={() => onNavigate('download')}
           >
-            Get KnowTheMD v1.0.0
+            Get KnowTheMD v1.0
           </GlassButton>
         </div>
       </section>

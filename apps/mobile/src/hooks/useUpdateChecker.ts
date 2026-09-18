@@ -13,7 +13,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 
-const CURRENT_VERSION = '1.0.0';
+const CURRENT_VERSION = '1.0';
 const GITHUB_API_URL =
   'https://api.github.com/repos/MrGokulaKrishnan/KnowTheMD/releases/latest';
 const APK_ASSET_PATTERN = /\.apk$/i;
