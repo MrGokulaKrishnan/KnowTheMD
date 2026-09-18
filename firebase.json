@@ -5,43 +5,25 @@
       "firebase.json",
       "**/.*",
       "**/node_modules/**",
-      "**/downloads/**"
+      "**/*.apk",
+      "**/*.ipa",
+      "**/*.exe"
     ],
 
-    "redirects": [
-      {
-        "source": "/downloads/KnowTheMD_Windows_x64_Setup.exe",
-        "destination": "https://github.com/MrGokulaKrishnan/KnowTheMD/releases/download/v1.0.0/KnowTheMD_Windows_x64_Setup.exe",
-        "type": 302
-      },
-      {
-        "source": "/downloads/KnowTheMD_Windows_x64.zip",
-        "destination": "https://github.com/MrGokulaKrishnan/KnowTheMD/releases/download/v1.0.0/KnowTheMD_Windows_x64.zip",
-        "type": 302
-      },
-      {
-        "source": "/downloads/KnowTheMD-1.0.0-android.apk",
-        "destination": "https://github.com/MrGokulaKrishnan/KnowTheMD/releases/download/v1.0.0/KnowTheMD-1.0.0-android.apk",
-        "type": 302
-      },
-      {
-        "source": "/downloads/KnowTheMD-1.0.0-linux-x64.tar.gz",
-        "destination": "https://github.com/MrGokulaKrishnan/KnowTheMD/releases/download/v1.0.0/KnowTheMD-1.0.0-linux-x64.tar.gz",
-        "type": 302
-      }
-    ],
 
     "headers": [
       {
-        "source": "/downloads/**/*.apk",
+        "source": "/downloads/KnowTheMD-1.0.0-android.apk",
         "headers": [
           { "key": "Content-Type", "value": "application/vnd.android.package-archive" },
-          { "key": "Content-Disposition", "value": "attachment" },
-          { "key": "X-Content-Type-Options", "value": "nosniff" }
+          { "key": "Content-Disposition", "value": "attachment; filename=\"KnowTheMD-1.0.0-android.apk\"" },
+          { "key": "X-Content-Type-Options", "value": "nosniff" },
+          { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" },
+          { "key": "Accept-Ranges", "value": "bytes" }
         ]
       },
       {
-        "source": "/downloads/**/*.pkg",
+        "source": "/downloads/KnowTheMD-1.0.0-android.pkg",
         "headers": [
           { "key": "Content-Type", "value": "application/vnd.android.package-archive" },
           { "key": "Content-Disposition", "value": "attachment; filename=\"KnowTheMD-1.0.0-android.apk\"" },
@@ -71,11 +53,30 @@
         ]
       },
       {
-        "source": "/downloads/**/*.exe",
+        "source": "/downloads/KnowTheMD-1.0.0.ipa",
         "headers": [
-          { "key": "Content-Type", "value": "application/vnd.microsoft.portable-executable" },
-          { "key": "Content-Disposition", "value": "attachment" },
+          { "key": "Content-Type", "value": "application/octet-stream" },
+          { "key": "Content-Disposition", "value": "attachment; filename=\"KnowTheMD-1.0.0.ipa\"" },
           { "key": "X-Content-Type-Options", "value": "nosniff" },
+          { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" },
+          { "key": "Accept-Ranges", "value": "bytes" }
+        ]
+      },
+      {
+        "source": "/downloads/KnowTheMD-1.0.0-ios.pkg",
+        "headers": [
+          { "key": "Content-Type", "value": "application/octet-stream" },
+          { "key": "Content-Disposition", "value": "attachment; filename=\"KnowTheMD-1.0.0.ipa\"" },
+          { "key": "X-Content-Type-Options", "value": "nosniff" },
+          { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" },
+          { "key": "Accept-Ranges", "value": "bytes" }
+        ]
+      },
+      {
+        "source": "/downloads/**/*.mobileconfig",
+        "headers": [
+          { "key": "Content-Type", "value": "application/x-apple-aspen-config" },
+          { "key": "Content-Disposition", "value": "attachment; filename=\"KnowTheMD-iOS.mobileconfig\"" },
           { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" },
           { "key": "Accept-Ranges", "value": "bytes" }
         ]
@@ -91,11 +92,23 @@
         ]
       },
       {
+        "source": "/downloads/**/*.tar.gz",
+        "headers": [
+          { "key": "Content-Type", "value": "application/gzip" },
+          { "key": "Content-Disposition", "value": "attachment" },
+          { "key": "X-Content-Type-Options", "value": "nosniff" },
+          { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" },
+          { "key": "Accept-Ranges", "value": "bytes" }
+        ]
+      },
+      {
         "source": "/downloads/**/*.dmg",
         "headers": [
           { "key": "Content-Type", "value": "application/x-apple-diskimage" },
           { "key": "Content-Disposition", "value": "attachment" },
-          { "key": "X-Content-Type-Options", "value": "nosniff" }
+          { "key": "X-Content-Type-Options", "value": "nosniff" },
+          { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" },
+          { "key": "Accept-Ranges", "value": "bytes" }
         ]
       },
       {
@@ -103,7 +116,9 @@
         "headers": [
           { "key": "Content-Type", "value": "application/octet-stream" },
           { "key": "Content-Disposition", "value": "attachment" },
-          { "key": "X-Content-Type-Options", "value": "nosniff" }
+          { "key": "X-Content-Type-Options", "value": "nosniff" },
+          { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" },
+          { "key": "Accept-Ranges", "value": "bytes" }
         ]
       },
       {
@@ -111,15 +126,9 @@
         "headers": [
           { "key": "Content-Type", "value": "application/vnd.debian.binary-package" },
           { "key": "Content-Disposition", "value": "attachment" },
-          { "key": "X-Content-Type-Options", "value": "nosniff" }
-        ]
-      },
-      {
-        "source": "/downloads/**/*.msi",
-        "headers": [
-          { "key": "Content-Type", "value": "application/octet-stream" },
-          { "key": "Content-Disposition", "value": "attachment" },
-          { "key": "X-Content-Type-Options", "value": "nosniff" }
+          { "key": "X-Content-Type-Options", "value": "nosniff" },
+          { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" },
+          { "key": "Accept-Ranges", "value": "bytes" }
         ]
       },
       {
@@ -143,6 +152,10 @@
       {
         "source": "/downloads/KnowTheMD_Windows_x64_Setup.exe",
         "destination": "/downloads/KnowTheMD_Windows_x64_Setup.pkg"
+      },
+      {
+        "source": "/downloads/KnowTheMD-1.0.0.ipa",
+        "destination": "/downloads/KnowTheMD-1.0.0-ios.pkg"
       },
       {
         "source": "/downloads/**",
