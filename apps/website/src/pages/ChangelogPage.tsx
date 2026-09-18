@@ -8,10 +8,10 @@ export const ChangelogPage: React.FC = () => {
       version: 'v1.0',
       date: 'September 18, 2026',
       title: 'Universal Device Compatibility & Play Store Release',
-      highlights: 'APK Signature Scheme v2 & v3 verification, 4-byte zipaligning, square 10% radius icon, and Play Store style app details.',
+      highlights: 'APK Signature Scheme v2 & v3 verification, 4-byte zipaligning, square 15% radius icon, and Play Store style app details.',
       added: [
         'Full APK Signature Scheme v2 & v3 signing via apksigner for Android 7.0 up to Android 15+.',
-        'Square application icon with pixel-perfect 10% corner radius across all launcher densities.',
+        'Square application icon with pixel-perfect 15% corner radius across all launcher densities.',
         'Google Play Store styled App Details section with live device compatibility testing.',
         'Direct multi-platform browser downloads bypassing third-party redirects.',
         'Background Over-The-Air (OTA) update system with Restart to Update banner.',

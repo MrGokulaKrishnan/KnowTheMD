@@ -223,7 +223,7 @@ export const AppDetailsSection: React.FC = () => {
           </p>
 
           <p>
-            <strong className="text-white">Refined Square Brand Icon with 10% Corner Radius:</strong> The APK package launcher icon, adaptive foreground icon, round icon, and desktop emblems have been updated with the refined square 10% radius silhouette.
+            <strong className="text-white">Refined Square Brand Icon with 15% Corner Radius:</strong> The APK package launcher icon, adaptive foreground icon, round icon, and application emblems have been updated with the refined square 15% radius silhouette.
           </p>
 
           <p>

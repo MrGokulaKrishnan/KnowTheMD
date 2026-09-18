@@ -142,7 +142,7 @@ export const RELEASES: PlatformRelease[] = [
         fileSize: '4.7 MB',
         fileName: 'KnowTheMD-v1.0-android.apk',
         downloadUrl: '/downloads/KnowTheMD-v1.0-android.apk',
-        sha256: '4ba8758a82b612f3a572b0547a44268e7e85c151b513e270d2cbd5c53c91a4ac',
+        sha256: '71aacebd01db5a0fc06c8335ceab73197d4a69072bb122669c402770c65edd04',
         available: true,
       },
     ],

@@ -19,15 +19,15 @@ RES_DIR = os.path.join(ROOT_DIR, 'apps', 'mobile', 'android', 'app', 'src', 'mai
 DOWNLOADS_DIR = os.path.join(ROOT_DIR, 'apps', 'website', 'public', 'downloads')
 DIST_DOWNLOADS = os.path.join(ROOT_DIR, 'apps', 'website', 'dist', 'downloads')
 
-print("=== Generating Square Logo with 10% Corner Radius ===")
+print("=== Generating Square Logo with 15% Corner Radius ===")
 
-def create_square_10pct_icon(source_img, size):
+def create_square_15pct_icon(source_img, size):
     """
-    Creates an icon resized to `size x size` with a 10% corner radius
+    Creates an icon resized to `size x size` with a 15% corner radius
     using 4x supersampled anti-aliasing. Outer corners are transparent.
     """
     w, h = size, size
-    radius = int(round(w * 0.10))
+    radius = int(round(w * 0.15))
     scale = 4
 
     # 4x supersampled mask
@@ -47,9 +47,9 @@ def create_square_10pct_icon(source_img, size):
 def create_adaptive_foreground(source_img, canvas_size, icon_size):
     """
     Creates a 108dp canvas with transparent padding, placing the
-    10% corner radius square icon centered in the safe area.
+    15% corner radius square icon centered in the safe area.
     """
-    icon = create_square_10pct_icon(source_img, icon_size)
+    icon = create_square_15pct_icon(source_img, icon_size)
     fg = Image.new('RGBA', (canvas_size, canvas_size), (0, 0, 0, 0))
     offset = (canvas_size - icon_size) // 2
     fg.paste(icon, (offset, offset), mask=icon)
@@ -71,12 +71,12 @@ for density, cfg in DENSITIES.items():
     density_dir = os.path.join(RES_DIR, f'mipmap-{density}')
     os.makedirs(density_dir, exist_ok=True)
 
-    # 1. Launcher icon (square with 10% radius)
-    launcher_img = create_square_10pct_icon(source_image, cfg['launcher'])
+    # 1. Launcher icon (square with 15% radius)
+    launcher_img = create_square_15pct_icon(source_image, cfg['launcher'])
     launcher_path = os.path.join(density_dir, 'ic_launcher.png')
     launcher_img.save(launcher_path, 'PNG')
 
-    # 2. Round icon (also square with 10% radius as requested by user)
+    # 2. Round icon (also square with 15% radius as requested by user)
     round_path = os.path.join(density_dir, 'ic_launcher_round.png')
     launcher_img.save(round_path, 'PNG')
 
@@ -90,14 +90,16 @@ for density, cfg in DENSITIES.items():
         'round': launcher_img,
         'fg': fg_img,
     }
-    print(f"  • mipmap-{density}: launcher={cfg['launcher']}px, fg={cfg['fg_canvas']}px (r={cfg['launcher']*0.10:.1f}px)")
+    print(f"  • mipmap-{density}: launcher={cfg['launcher']}px, fg={cfg['fg_canvas']}px (r={cfg['launcher']*0.15:.1f}px)")
 
 print("Android res/ mipmap folders updated successfully.")
 
 # ── Update the APK binary ───────────────────────────────────────────────────
-print("=== Updating Android APK Package with Square 10% Radius Logo ===")
+print("=== Updating Android APK Package with Square 15% Radius Logo ===")
 
 apk_source = os.path.join(ROOT_DIR, 'apps', 'mobile', 'android', 'app', 'build', 'outputs', 'apk', 'debug', 'app-debug.apk')
+if not os.path.exists(apk_source):
+    apk_source = os.path.join(DOWNLOADS_DIR, 'KnowTheMD-v1.0-android.apk')
 if not os.path.exists(apk_source):
     apk_source = os.path.join(DOWNLOADS_DIR, 'KnowTheMD-1.0.0-android.apk')
 
@@ -117,7 +119,7 @@ if os.path.exists(meta_inf):
         if f.endswith('.RSA') or f.endswith('.SF') or f.endswith('.MF'):
             os.remove(os.path.join(meta_inf, f))
 
-# Overwrite APK icon files with the new square 10% radius icons
+# Overwrite APK icon files with the new square 15% radius icons
 for density, cfg in DENSITIES.items():
     v4_dir = os.path.join(temp_apk_dir, 'res', f'mipmap-{density}-v4')
     if os.path.exists(v4_dir):
@@ -126,11 +128,11 @@ for density, cfg in DENSITIES.items():
         launcher_img.save(os.path.join(v4_dir, 'ic_launcher.png'), 'PNG')
         launcher_img.save(os.path.join(v4_dir, 'ic_launcher_round.png'), 'PNG')
         fg_img.save(os.path.join(v4_dir, 'ic_launcher_foreground.png'), 'PNG')
-        print(f"  • Injected new 10% radius icons into APK res/mipmap-{density}-v4/")
+        print(f"  • Injected new 15% radius icons into APK res/mipmap-{density}-v4/")
 
-# Re-zip the APK
-updated_apk_path = os.path.join(DOWNLOADS_DIR, 'KnowTheMD-1.0.0-android.apk')
-with zipfile.ZipFile(updated_apk_path, 'w', compression=zipfile.ZIP_DEFLATED) as zout:
+# Re-zip the APK (unaligned temporary)
+temp_unaligned = os.path.join(ROOT_DIR, 'scripts', '.temp-unaligned.apk')
+with zipfile.ZipFile(temp_unaligned, 'w', compression=zipfile.ZIP_DEFLATED) as zout:
     for root, dirs, files in os.walk(temp_apk_dir):
         for file in files:
             full_path = os.path.join(root, file)
@@ -138,45 +140,76 @@ with zipfile.ZipFile(updated_apk_path, 'w', compression=zipfile.ZIP_DEFLATED) as
             zout.write(full_path, arcname=rel_path)
 
 shutil.rmtree(temp_apk_dir, ignore_errors=True)
-print(f"Repacked APK: {updated_apk_path}")
 
-# Sign APK using jarsigner and debug.keystore
-jarsigner = r"C:\Program Files\Java\jdk-17\bin\jarsigner.exe"
-keystore = os.path.expanduser(r"~/.android/debug.keystore")
-if os.path.exists(jarsigner) and os.path.exists(keystore):
-    print("Signing APK with debug keystore...")
-    cmd = [
-        jarsigner,
-        "-keystore", keystore,
-        "-storepass", "android",
-        "-keypass", "android",
-        "-digestalg", "SHA-256",
-        "-sigalg", "SHA256withRSA",
-        updated_apk_path,
-        "androiddebugkey"
-    ]
-    res = subprocess.run(cmd, capture_output=True, text=True)
+# 4-byte zipalign
+zipalign_bin = r"C:\Users\gokul\android-sdk\build-tools\34.0.0\zipalign.exe"
+temp_aligned = os.path.join(ROOT_DIR, 'scripts', '.temp-aligned.apk')
+if os.path.exists(temp_aligned):
+    os.remove(temp_aligned)
+
+if os.path.exists(zipalign_bin):
+    print("Aligning APK with 4-byte zipalign...")
+    res = subprocess.run([zipalign_bin, "-p", "-f", "4", temp_unaligned, temp_aligned], capture_output=True, text=True)
     if res.returncode == 0:
-        print("[SUCCESS] APK successfully signed with jarsigner!")
+        print("[SUCCESS] 4-byte zipalign complete.")
     else:
-        print(f"Warning: jarsigner output: {res.stderr or res.stdout}")
+        print(f"Warning: zipalign error: {res.stderr}")
+        shutil.copyfile(temp_unaligned, temp_aligned)
+else:
+    shutil.copyfile(temp_unaligned, temp_aligned)
 
-# Also copy to app-debug.apk in build folder
-shutil.copyfile(updated_apk_path, os.path.join(ROOT_DIR, 'apps', 'mobile', 'android', 'app', 'build', 'outputs', 'apk', 'debug', 'app-debug.apk'))
+if os.path.exists(temp_unaligned):
+    os.remove(temp_unaligned)
 
-# Copy to .pkg and .zip for web distribution
-pkg_dest = os.path.join(DOWNLOADS_DIR, 'KnowTheMD-1.0.0-android.pkg')
-zip_dest = os.path.join(DOWNLOADS_DIR, 'KnowTheMD-1.0.0-android.zip')
-shutil.copyfile(updated_apk_path, pkg_dest)
+# Sign APK using apksigner with Scheme v2 & v3
+apksigner_bin = r"C:\Users\gokul\android-sdk\build-tools\34.0.0\apksigner.bat"
+keystore = os.path.expanduser(r"~/.android/debug.keystore")
+if os.path.exists(apksigner_bin) and os.path.exists(keystore):
+    print("Signing APK with apksigner (Scheme v2 & v3)...")
+    cmd = [
+        apksigner_bin, "sign",
+        "--ks", keystore,
+        "--ks-pass", "pass:android",
+        "--key-pass", "pass:android",
+        temp_aligned
+    ]
+    res = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+    if res.returncode == 0:
+        print("[SUCCESS] APK successfully signed with apksigner!")
+    else:
+        print(f"Warning: apksigner output: {res.stderr or res.stdout}")
 
-with zipfile.ZipFile(zip_dest, 'w', compression=zipfile.ZIP_DEFLATED) as zf:
-    zf.write(updated_apk_path, arcname='KnowTheMD-1.0.0-android.apk')
+    # Verify signature
+    verify_cmd = [apksigner_bin, "verify", "--verbose", temp_aligned]
+    v_res = subprocess.run(verify_cmd, shell=True, capture_output=True, text=True)
+    print("Signature verification:\n", v_res.stdout)
 
-# Also sync to dist/downloads
-os.makedirs(DIST_DOWNLOADS, exist_ok=True)
-shutil.copyfile(pkg_dest, os.path.join(DIST_DOWNLOADS, 'KnowTheMD-1.0.0-android.pkg'))
-shutil.copyfile(zip_dest, os.path.join(DIST_DOWNLOADS, 'KnowTheMD-1.0.0-android.zip'))
-shutil.copyfile(updated_apk_path, os.path.join(DIST_DOWNLOADS, 'KnowTheMD-1.0.0-android.apk'))
+# Copy aligned & signed APK to outputs
+output_filenames = [
+    'KnowTheMD-v1.0-android.apk',
+    'KnowTheMD-v1.0-android.pkg',
+    'KnowTheMD-1.0.0-android.apk',
+    'KnowTheMD-1.0.0-android.pkg',
+]
+
+for name in output_filenames:
+    shutil.copyfile(temp_aligned, os.path.join(DOWNLOADS_DIR, name))
+    shutil.copyfile(temp_aligned, os.path.join(DIST_DOWNLOADS, name))
+
+# Also copy to build outputs
+debug_apk_dest = os.path.join(ROOT_DIR, 'apps', 'mobile', 'android', 'app', 'build', 'outputs', 'apk', 'debug', 'app-debug.apk')
+os.makedirs(os.path.dirname(debug_apk_dest), exist_ok=True)
+shutil.copyfile(temp_aligned, debug_apk_dest)
+
+# Create zip versions
+for zip_name, inner_name in [('KnowTheMD-v1.0-android.zip', 'KnowTheMD-v1.0-android.apk'), ('KnowTheMD-1.0.0-android.zip', 'KnowTheMD-1.0.0-android.apk')]:
+    z_path = os.path.join(DOWNLOADS_DIR, zip_name)
+    with zipfile.ZipFile(z_path, 'w', compression=zipfile.ZIP_DEFLATED) as zf:
+        zf.write(temp_aligned, arcname=inner_name)
+    shutil.copyfile(z_path, os.path.join(DIST_DOWNLOADS, zip_name))
+
+if os.path.exists(temp_aligned):
+    os.remove(temp_aligned)
 
 # Compute SHA256 & size
 def get_sha256(file_path):
@@ -186,11 +219,9 @@ def get_sha256(file_path):
             sha.update(chunk)
     return sha.hexdigest()
 
-apk_size = os.path.getsize(updated_apk_path)
-apk_sha = get_sha256(updated_apk_path)
-zip_size = os.path.getsize(zip_dest)
-zip_sha = get_sha256(zip_dest)
+apk_path = os.path.join(DOWNLOADS_DIR, 'KnowTheMD-v1.0-android.apk')
+apk_size = os.path.getsize(apk_path)
+apk_sha = get_sha256(apk_path)
 
-print(f"\n[Artifact] KnowTheMD-1.0.0-android.apk: {(apk_size/(1024*1024)):.2f} MB | SHA-256: {apk_sha}")
-print(f"[Artifact] KnowTheMD-1.0.0-android.zip: {(zip_size/(1024*1024)):.2f} MB | SHA-256: {zip_sha}")
-print("=== APK Square 10% Radius Logo Update Complete! ===")
+print(f"\n[Artifact] KnowTheMD-v1.0-android.apk: {(apk_size/(1024*1024)):.2f} MB | SHA-256: {apk_sha}")
+print("=== APK Square 15% Radius Logo Update Complete! ===")
