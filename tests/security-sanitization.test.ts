@@ -66,4 +66,23 @@ describe('Security Sanitization & Defense-in-Depth', () => {
     expect(sanitized).not.toContain('<iframe');
     expect(sanitized).not.toContain('<embed');
   });
+
+  it('HIGH: blocks obfuscated javascript with control characters or whitespace in schemes', () => {
+    expect(sanitizeUrl('java\x00script:alert(1)')).toBe('#blocked-unsafe-uri');
+    expect(sanitizeUrl('  javascript :alert(1)')).toBe('#blocked-unsafe-uri');
+    expect(sanitizeUrl('javascript&colon;alert(1)')).toBe('#blocked-unsafe-uri');
+  });
+
+  it('CRITICAL: blocks raw HTML href containing data:text/html payload', () => {
+    const malicious = `<a href="data:text/html;base64,PHNjcmlwdD5hbGVydCgxKTwvc2NyaXB0Pg==">Click for free money</a>`;
+    const clean = sanitizeHtml(malicious);
+    expect(clean).toContain('href="#blocked"');
+    expect(clean).not.toContain('data:text/html');
+  });
+
+  it('HIGH: safely preserves legitimate data attributes like data-copy-code', () => {
+    const safeButton = `<button data-copy-code="const%20a%20%3D%201%3B" class="btn">Copy</button>`;
+    const clean = sanitizeHtml(safeButton);
+    expect(clean).toContain('data-copy-code="const%20a%20%3D%201%3B"');
+  });
 });

@@ -28,6 +28,8 @@ import { Toolbar, WorkspaceMode } from './components/Toolbar';
 import { StatusBar } from './components/StatusBar';
 import { SettingsModal, EditorSettings } from './components/SettingsModal';
 import { DiagnosticLogModal } from './components/DiagnosticLogModal';
+import { UpdateBanner } from './components/UpdateBanner';
+import { useAutoUpdater } from './hooks/useAutoUpdater';
 import {
   DocumentItem,
   RecentItem,
@@ -39,6 +41,7 @@ import {
   loadSessionTabs,
   logDiagnostic,
 } from './fileSystem';
+
 
 const DEFAULT_DOC_CONTENT = `# Welcome to KnowTheMD
 
@@ -79,9 +82,11 @@ Enjoy writing with **KnowTheMD**!
 `;
 
 export const App: React.FC = () => {
-  // Theme state
-  const [theme, setTheme] = useState<'dark' | 'light' | 'system'>('dark');
-  const isLight = theme === 'light';
+  // Theme is strictly Liquid Glass Dark across all platforms
+  const theme = 'dark';
+
+  // ── Auto-Updater (Electron only — no-ops in browser) ──
+  const updater = useAutoUpdater();
 
   // Workspace Mode: edit | preview | split | reading
   const [mode, setMode] = useState<WorkspaceMode>('split');
@@ -264,11 +269,30 @@ export const App: React.FC = () => {
     setPendingCloseId(null);
   };
 
+  // Logo click: Navigate to homepage / welcome document
+  const handleGoHome = () => {
+    const welcomeDoc = docs.find((d) => d.id === 'doc_welcome');
+    if (!welcomeDoc) {
+      const restoredWelcome: DocumentItem = {
+        id: 'doc_welcome',
+        name: 'Welcome.md',
+        content: DEFAULT_DOC_CONTENT,
+        isDirty: false,
+      };
+      setDocs((prev) => [restoredWelcome, ...prev]);
+      setActiveDocId('doc_welcome');
+    } else {
+      setActiveDocId('doc_welcome');
+    }
+    setMode('split');
+    addToast('info', 'Welcome to KnowTheMD Homepage! Click Open File or New File to start.', 'Homepage');
+  };
+
   // Export handlers
   const handleExport = (format: 'pdf' | 'html' | 'txt' | 'md') => {
     const baseName = activeDoc.name.replace(/\.[^/.]+$/, '');
     if (format === 'html') {
-      const htmlStr = exportToHtml(activeDoc.content, activeDoc.name, isLight);
+      const htmlStr = exportToHtml(activeDoc.content, activeDoc.name, false);
       const blob = new Blob([htmlStr], { type: 'text/html;charset=utf-8' });
       downloadBlob(blob, `${baseName}.html`);
       addToast('success', `Exported ${baseName}.html`);
@@ -299,8 +323,14 @@ export const App: React.FC = () => {
     const a = document.createElement('a');
     a.href = url;
     a.download = filename;
+    document.body.appendChild(a);
     a.click();
-    URL.revokeObjectURL(url);
+    setTimeout(() => {
+      if (document.body.contains(a)) {
+        document.body.removeChild(a);
+      }
+      URL.revokeObjectURL(url);
+    }, 1000);
   };
 
   // Text formatting insertion
@@ -405,6 +435,8 @@ export const App: React.FC = () => {
     { id: 'export_html', title: 'Export Standalone HTML', category: 'Export', perform: () => handleExport('html') },
     { id: 'settings', title: 'Open Preferences', category: 'General', perform: () => setIsSettingsOpen(true) },
     { id: 'diagnostics', title: 'View Diagnostic Logs', category: 'Diagnostics', perform: () => setIsDiagnosticsOpen(true) },
+    { id: 'check_updates', title: 'Check for Updates', category: 'General', perform: updater.checkForUpdates },
+    ...(updater.state === 'ready' ? [{ id: 'install_update', title: `Install Update v${updater.updateInfo?.version ?? ''}`, category: 'General', perform: updater.installUpdate }] : []),
   ];
 
   const tabs: TabItem[] = docs.map((d) => ({
@@ -414,7 +446,7 @@ export const App: React.FC = () => {
   }));
 
   return (
-    <div className={`flex h-screen w-screen overflow-hidden ${isLight ? 'bg-slate-50 text-slate-900' : 'bg-[#030712] text-slate-100'}`}>
+    <div className="flex h-screen w-screen overflow-hidden bg-[#030712] text-slate-100">
       {/* 1. Sidebar */}
       <Sidebar
         isOpen={isSidebarOpen}
@@ -433,11 +465,14 @@ export const App: React.FC = () => {
         }}
         onOpenSettings={() => setIsSettingsOpen(true)}
         onOpenDiagnostics={() => setIsDiagnosticsOpen(true)}
-        lightMode={isLight}
+        onGoHome={handleGoHome}
       />
 
       {/* 2. Main Workspace */}
       <div className="flex-1 flex flex-col h-full overflow-hidden">
+        {/* OTA Update Banner (Electron only — invisible in browser/web) */}
+        <UpdateBanner {...updater} />
+
         {/* Toolbar */}
         <Toolbar
           mode={mode}
@@ -450,8 +485,6 @@ export const App: React.FC = () => {
           onSearch={() => setIsSearchOpen(true)}
           onCommandPalette={() => setIsPaletteOpen(true)}
           onExport={handleExport}
-          lightMode={isLight}
-          onToggleTheme={() => setTheme(isLight ? 'dark' : 'light')}
         />
 
         {/* TabBar (hidden in reading mode) */}
@@ -471,7 +504,6 @@ export const App: React.FC = () => {
             {mode === 'reading' ? (
               <ReadingMode
                 content={activeDoc.content}
-                lightMode={isLight}
                 onExit={() => setMode('split')}
               />
             ) : mode === 'split' ? (
@@ -486,10 +518,9 @@ export const App: React.FC = () => {
                 onSave={handleSave}
                 onSearch={() => setIsSearchOpen(true)}
                 onCommandPalette={() => setIsPaletteOpen(true)}
-                lightMode={isLight}
               />
             ) : mode === 'preview' ? (
-              <Preview content={activeDoc.content} lightMode={isLight} />
+              <Preview content={activeDoc.content} />
             ) : (
               <Editor
                 content={activeDoc.content}
@@ -597,14 +628,27 @@ export const App: React.FC = () => {
             localStorage.setItem('knowthemd_seen_onboarding', 'true');
           }}
           title="Welcome to KnowTheMD"
+          maxWidth="lg"
           message={
-            <div className="space-y-2 text-slate-300">
-              <p>Welcome to your new Markdown reader and editor. Here is how to get started:</p>
-              <ul className="list-disc list-inside space-y-1 text-slate-400">
-                <li><strong className="text-cyan-400">Open & Edit</strong> Markdown files with instant live preview.</li>
-                <li><strong className="text-cyan-400">Reading Mode</strong> gives you a distraction-free, typeset document view.</li>
-                <li><strong className="text-cyan-400">Export</strong> anytime to PDF, standalone HTML, clean Markdown, or Plain Text.</li>
-                <li><strong className="text-cyan-400">100% Offline & Local-First</strong>: Your files never leave your computer.</li>
+            <div className="space-y-3 text-slate-300 text-xs sm:text-sm">
+              <p>Welcome to your modern cross-platform Markdown workspace. Here is how to get started:</p>
+              <ul className="space-y-2 text-slate-300">
+                <li className="flex items-start gap-2">
+                  <span className="text-cyan-400 font-bold shrink-0">•</span>
+                  <span><strong className="text-white">Open & Edit</strong> Markdown files with instant live preview.</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-cyan-400 font-bold shrink-0">•</span>
+                  <span><strong className="text-white">Reading Mode</strong> gives you a distraction-free, typeset document view.</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-cyan-400 font-bold shrink-0">•</span>
+                  <span><strong className="text-white">Export</strong> anytime to PDF, standalone HTML, clean Markdown, or Plain Text.</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-cyan-400 font-bold shrink-0">•</span>
+                  <span><strong className="text-white">100% Offline & Local-First</strong>: Your files never leave your computer.</span>
+                </li>
               </ul>
             </div>
           }

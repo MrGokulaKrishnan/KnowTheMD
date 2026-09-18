@@ -4,6 +4,7 @@ import { computeStats } from '@knowthemd/markdown-engine';
 import { Editor, Preview, ReadingMode } from '@knowthemd/editor';
 import { MobileBottomNav, MobileTab } from './components/MobileBottomNav';
 import { MobileKeyboardToolbar } from './components/MobileKeyboardToolbar';
+import { useUpdateChecker } from './hooks/useUpdateChecker';
 import {
   Share2,
   FilePlus,
@@ -15,7 +16,11 @@ import {
   FileText,
   Clock,
   Sparkles,
+  Download,
+  X,
+  ArrowUpCircle,
 } from 'lucide-react';
+
 
 interface MobileDoc {
   id: string;
@@ -62,7 +67,11 @@ export const MobileApp: React.FC = () => {
   ]);
   const [activeDocId, setActiveDocId] = useState<string>('doc_1');
   const [fontSize, setFontSize] = useState<number>(15);
-  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  const [mobileToast, setMobileToast] = useState<string | null>(null);
+  const theme = 'dark';
+
+  // ── In-app update checker (polls GitHub Releases API, throttled 24h) ──
+  const updateChecker = useUpdateChecker();
 
   const activeDoc = docs.find((d) => d.id === activeDocId) || docs[0];
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -131,7 +140,8 @@ export const MobileApp: React.FC = () => {
       }
     } else {
       navigator.clipboard.writeText(activeDoc.content);
-      alert('Document copied to clipboard!');
+      setMobileToast('Document copied to clipboard!');
+      setTimeout(() => setMobileToast(null), 2500);
     }
   };
 
@@ -184,14 +194,48 @@ export const MobileApp: React.FC = () => {
 
   return (
     <div className="flex flex-col h-screen w-screen bg-[#030712] text-slate-100 overflow-hidden select-none">
+
+      {/* ── Update Banner (shows when a new APK version is on GitHub Releases) ── */}
+      {updateChecker.state === 'available' && (
+        <div className="w-full bg-slate-900/95 border-b border-cyan-500/25 px-4 py-2.5 flex items-center gap-3 z-50 shrink-0">
+          <ArrowUpCircle className="w-4 h-4 text-cyan-400 shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-semibold text-cyan-300">
+              KnowTheMD v{updateChecker.latestVersion} is available!
+            </p>
+            <p className="text-[10px] text-slate-500 truncate">Tap Download to get the latest APK</p>
+          </div>
+          <a
+            href={updateChecker.downloadUrl ?? updateChecker.releaseUrl ?? '#'}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-500/20 border border-cyan-400/30 text-cyan-300 text-xs font-semibold shrink-0 active:scale-95 transition-all"
+          >
+            <Download className="w-3 h-3" />
+            Download
+          </a>
+          <button
+            onClick={updateChecker.dismiss}
+            className="text-slate-600 hover:text-slate-400 p-1 shrink-0"
+            aria-label="Dismiss update banner"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
+
       {/* 1. Mobile Header */}
       <header className="h-14 safe-top bg-slate-950/90 backdrop-blur-xl border-b border-cyan-500/20 px-4 flex items-center justify-between shrink-0 z-30">
-        <div className="flex items-center gap-2">
+        <button
+          onClick={() => setActiveTab('home')}
+          className="flex items-center gap-2 cursor-pointer hover:opacity-80 active:scale-95 transition-all text-left"
+          title="KnowTheMD Homepage (Open File / Home)"
+        >
           <BrandLogo size={24} />
           <span className="text-sm font-semibold text-white truncate max-w-[130px]">
             {activeDoc.name}
           </span>
-        </div>
+        </button>
 
         {activeTab === 'editor' && (
           <div className="flex items-center gap-1.5">
@@ -252,11 +296,10 @@ export const MobileApp: React.FC = () => {
               {editorSubMode === 'reading' ? (
                 <ReadingMode
                   content={activeDoc.content}
-                  lightMode={theme === 'light'}
                   onExit={() => setEditorSubMode('edit')}
                 />
               ) : editorSubMode === 'preview' ? (
-                <Preview content={activeDoc.content} lightMode={theme === 'light'} />
+                <Preview content={activeDoc.content} />
               ) : (
                 <Editor
                   content={activeDoc.content}
@@ -412,12 +455,9 @@ export const MobileApp: React.FC = () => {
 
               <div className="flex items-center justify-between p-3 rounded-xl bg-slate-900/60 border border-cyan-500/15">
                 <span>Theme</span>
-                <button
-                  onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                  className="px-3 py-1 rounded-lg bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 capitalize"
-                >
-                  {theme}
-                </button>
+                <span className="px-3 py-1 rounded-lg bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 text-xs font-semibold">
+                  Liquid Dark (Exclusive)
+                </span>
               </div>
 
               <div className="p-4 rounded-xl bg-slate-900/60 border border-cyan-500/15 space-y-1">
@@ -431,6 +471,14 @@ export const MobileApp: React.FC = () => {
 
       {/* 3. Bottom Touch Navigation Bar */}
       <MobileBottomNav activeTab={activeTab} onSelectTab={setActiveTab} />
+
+      {/* 4. Floating Feedback Toast */}
+      {mobileToast && (
+        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-slate-900/95 border border-cyan-500/40 rounded-full shadow-[0_8px_25px_rgba(0,0,0,0.6),0_0_15px_rgba(0,240,255,0.2)] text-xs text-white flex items-center gap-2 animate-fade-in pointer-events-none">
+          <Check className="w-3.5 h-3.5 text-emerald-400" />
+          <span>{mobileToast}</span>
+        </div>
+      )}
     </div>
   );
 };

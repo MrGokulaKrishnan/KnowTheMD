@@ -30,12 +30,12 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
       {showText && (
         <div className="flex flex-col justify-center text-left">
           <div className="flex items-center">
-            <span className={`text-xl font-bold tracking-tight font-sans ${lightMode ? 'text-slate-900' : 'text-white'}`}>
+            <span className="text-xl font-bold tracking-tight font-sans text-white">
               KnowThe<span className="text-cyan-400 bg-gradient-to-r from-cyan-400 to-sky-500 bg-clip-text text-transparent">MD</span>
             </span>
           </div>
           {tagline && (
-            <span className={`text-xs tracking-wider uppercase font-medium ${lightMode ? 'text-slate-500' : 'text-slate-400'}`}>
+            <span className="text-xs tracking-wider uppercase font-medium text-slate-400">
               Read. Write. Understand Markdown.
             </span>
           )}

@@ -56,7 +56,24 @@ describe('Markdown Engine Parser & GFM', () => {
     const { html } = renderMarkdownToHtml(md);
     expect(html).toContain('TYPESCRIPT');
     expect(html).toContain('Copy');
+    expect(html).toContain('data-copy-code=');
+    expect(html).not.toContain('onclick=');
     expect(html).toContain('text-cyan-400 font-semibold">const</span>');
+  });
+
+  it('protects underscores and asterisks within inline code from italic/bold conversion', () => {
+    const md = 'Code with `const my_var_name = 10;` and `*ptr = NULL;` intact.';
+    const { html } = renderMarkdownToHtml(md);
+    expect(html).toContain('const my_var_name = 10;');
+    expect(html).toContain('*ptr = NULL;');
+    expect(html).not.toContain('<em class="italic text-slate-200">var</em>');
+  });
+
+  it('handles GFM word-boundary underscores properly', () => {
+    const md = 'This is _emphasized_ but some_variable_name remains unaltered.';
+    const { html } = renderMarkdownToHtml(md);
+    expect(html).toContain('<em class="italic text-slate-200">emphasized</em>');
+    expect(html).toContain('some_variable_name');
   });
 
   it('parses math formulas (inline and block)', () => {

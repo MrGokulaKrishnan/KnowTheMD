@@ -190,8 +190,14 @@ export async function saveAsMarkdownFile(
       const a = document.createElement('a');
       a.href = url;
       a.download = defaultName;
+      document.body.appendChild(a);
       a.click();
-      URL.revokeObjectURL(url);
+      setTimeout(() => {
+        if (document.body.contains(a)) {
+          document.body.removeChild(a);
+        }
+        URL.revokeObjectURL(url);
+      }, 1000);
       addRecentFile(defaultName);
       logDiagnostic('info', 'File', `Saved As (download): ${defaultName}`);
       return { name: defaultName };

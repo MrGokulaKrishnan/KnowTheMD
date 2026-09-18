@@ -2,24 +2,176 @@
   "name": "knowthemd-desktop",
   "version": "1.0.0",
   "main": "electron-main.cjs",
+  "description": "KnowTheMD — Read. Write. Understand Markdown.",
+  "author": {
+    "name": "KnowTheMD",
+    "email": "support@knowthemd.com"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "package:win": "electron-packager . KnowTheMD --platform=win32 --arch=x64 --out=release-builds --overwrite"
+    "dist:win": "npm run build && electron-builder --win --x64",
+    "dist:win:arm64": "npm run build && electron-builder --win --arm64",
+    "dist:mac": "npm run build && electron-builder --mac --universal",
+    "dist:linux": "npm run build && electron-builder --linux",
+    "dist:all": "npm run build && electron-builder -mwl"
   },
   "dependencies": {
     "@knowthemd/editor": "*",
     "@knowthemd/markdown-engine": "*",
     "@knowthemd/ui": "*",
+    "electron-updater": "^6.8.9",
     "lucide-react": "^0.460.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
-    "@electron/packager": "^18.4.4",
     "@vitejs/plugin-react": "^4.3.4",
-    "electron": "^41.7.1",
+    "electron": "41.7.1",
+    "electron-builder": "^25.1.8",
     "vite": "^6.4.3"
+  },
+  "build": {
+    "appId": "com.knowthemd.app",
+    "productName": "KnowTheMD",
+    "copyright": "Copyright © 2026 KnowTheMD",
+    "electronVersion": "41.7.1",
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "MrGokulaKrishnan",
+        "repo": "KnowTheMD"
+      }
+    ],
+    "directories": {
+      "output": "dist-release",
+      "buildResources": "public"
+    },
+    "files": [
+      "dist/**/*",
+      "electron-main.cjs",
+      "preload.cjs",
+      "package.json"
+    ],
+    "icon": "public/icon.ico",
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "public/icon.ico",
+      "publisherName": "KnowTheMD",
+      "requestedExecutionLevel": "asInvoker"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "allowElevation": true,
+      "installerIcon": "public/icon.ico",
+      "uninstallerIcon": "public/icon.ico",
+      "installerHeaderIcon": "public/icon.ico",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "KnowTheMD",
+      "include": "installer.nsh",
+      "perMachine": false
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "universal"
+          ]
+        },
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64"
+          ]
+        },
+        {
+          "target": "dmg",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "public/logo.png",
+      "category": "public.app-category.productivity",
+      "minimumSystemVersion": "12.0",
+      "darkModeSupport": true
+    },
+    "dmg": {
+      "title": "${productName} ${version}",
+      "contents": [
+        {
+          "x": 410,
+          "y": 150,
+          "type": "link",
+          "path": "/Applications"
+        },
+        {
+          "x": 130,
+          "y": 150,
+          "type": "file"
+        }
+      ]
+    },
+    "linux": {
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "deb",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "public/logo.png",
+      "category": "Office;TextEditor",
+      "description": "KnowTheMD — Read. Write. Understand Markdown.",
+      "maintainer": "KnowTheMD <support@knowthemd.com>",
+      "mimeTypes": [
+        "text/markdown",
+        "text/x-markdown"
+      ],
+      "desktop": {
+        "Name": "KnowTheMD",
+        "Comment": "Read. Write. Understand Markdown.",
+        "Categories": "Office;TextEditor"
+      }
+    },
+    "deb": {
+      "packageCategory": "editors"
+    },
+    "fileAssociations": [
+      {
+        "ext": "md",
+        "name": "Markdown Document",
+        "role": "Editor"
+      },
+      {
+        "ext": "markdown",
+        "name": "Markdown Document",
+        "role": "Editor"
+      }
+    ]
   }
 }

@@ -1,0 +1,172 @@
+name: Build Linux & macOS (On-Demand)
+
+# ─── Trigger ─────────────────────────────────────────────────────────────────
+# Manually triggered from GitHub Actions UI.
+# Builds Linux (AppImage + DEB) and macOS (Universal DMG) and uploads
+# the artifacts directly to the specified GitHub Release.
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Release tag to upload artifacts to (e.g. v1.0.0)'
+        required: true
+        default: 'v1.0.0'
+
+# ─── Permissions ─────────────────────────────────────────────────────────────
+permissions:
+  contents: write
+
+# ─── Shared env ──────────────────────────────────────────────────────────────
+env:
+  NODE_VERSION: '22'
+
+jobs:
+
+  # ═══ macOS — Universal DMG ════════════════════════════════════════════════
+  build-macos:
+    name: 🍎 Build macOS Universal DMG
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Build shared packages
+        run: |
+          npm run build --workspace=packages/ui --if-present
+          npm run build --workspace=packages/markdown-engine --if-present
+          npm run build --workspace=packages/editor --if-present
+
+      - name: Build desktop web bundle
+        run: npm run build --workspace=apps/desktop
+
+      - name: Install desktop dependencies
+        working-directory: apps/desktop
+        run: npm ci
+
+      - name: Build macOS Universal DMG
+        working-directory: apps/desktop
+        run: npx electron-builder --mac --x64 --arm64
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: List outputs
+        run: find apps/desktop/dist-release -type f | sort
+
+      - name: Compute SHA-256 checksums
+        run: |
+          find apps/desktop/dist-release -name "*.dmg" | while read f; do
+            hash=$(shasum -a 256 "$f" | awk '{print $1}')
+            size=$(stat -f%z "$f")
+            name=$(basename "$f")
+            echo "FILE:$name SHA256:$hash SIZE:$size"
+            echo "$hash  $name" >> macos-checksums.txt
+          done
+
+      - name: Upload DMGs to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.release_tag }}
+          files: apps/desktop/dist-release/*.dmg
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload macOS build artifact (for pipeline use)
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-release
+          path: |
+            apps/desktop/dist-release/*.dmg
+            macos-checksums.txt
+          if-no-files-found: error
+
+  # ═══ Linux — AppImage + DEB ════════════════════════════════════════════════
+  build-linux:
+    name: 🐧 Build Linux AppImage + DEB
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y rpm fakeroot libopenjp2-tools
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Build shared packages
+        run: |
+          npm run build --workspace=packages/ui --if-present
+          npm run build --workspace=packages/markdown-engine --if-present
+          npm run build --workspace=packages/editor --if-present
+
+      - name: Build desktop web bundle
+        run: npm run build --workspace=apps/desktop
+
+      - name: Install desktop dependencies
+        working-directory: apps/desktop
+        run: npm ci
+
+      - name: Build Linux AppImage and DEB
+        working-directory: apps/desktop
+        run: npx electron-builder --linux AppImage deb --x64
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: List outputs
+        run: find apps/desktop/dist-release -type f | sort
+
+      - name: Compute SHA-256 checksums
+        run: |
+          find apps/desktop/dist-release \( -name "*.AppImage" -o -name "*.deb" \) | while read f; do
+            hash=$(sha256sum "$f" | awk '{print $1}')
+            size=$(stat -c%s "$f")
+            name=$(basename "$f")
+            echo "FILE:$name SHA256:$hash SIZE:$size"
+            echo "$hash  $name" >> linux-checksums.txt
+          done
+
+      - name: Validate Linux artifacts
+        run: |
+          appimage=$(find apps/desktop/dist-release -name "*.AppImage" | head -1)
+          deb=$(find apps/desktop/dist-release -name "*.deb" | head -1)
+          if [ -z "$appimage" ]; then echo "❌ ERROR: No AppImage found!"; exit 1; fi
+          if [ -z "$deb" ]; then echo "❌ ERROR: No DEB found!"; exit 1; fi
+          header=$(xxd -l 4 "$appimage" | awk '{print $2$3}')
+          if [[ ! "$header" == *"7f454c46"* ]]; then echo "❌ ERROR: AppImage does not have ELF header!"; exit 1; fi
+          echo "✅ Linux AppImage: $(basename $appimage)"
+          echo "✅ Linux DEB:      $(basename $deb)"
+
+      - name: Upload Linux packages to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.release_tag }}
+          files: |
+            apps/desktop/dist-release/*.AppImage
+            apps/desktop/dist-release/*.deb
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Linux build artifact (for pipeline use)
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-release
+          path: |
+            apps/desktop/dist-release/*.AppImage
+            apps/desktop/dist-release/*.deb
+            linux-checksums.txt
+          if-no-files-found: error

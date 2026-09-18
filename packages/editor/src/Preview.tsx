@@ -39,9 +39,25 @@ export const Preview: React.FC<PreviewProps> = ({
           </div>
         )}
 
-        {/* Rendered HTML */}
+        {/* Rendered HTML with delegated copy handler */}
         <div
           className="prose prose-invert max-w-none leading-relaxed"
+          onClick={(e) => {
+            const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-copy-code]');
+            if (btn) {
+              const code = btn.getAttribute('data-copy-code');
+              if (code) {
+                navigator.clipboard.writeText(decodeURIComponent(code));
+                const originalText = btn.textContent || 'Copy';
+                btn.textContent = 'Copied!';
+                btn.classList.add('text-emerald-300');
+                setTimeout(() => {
+                  btn.textContent = originalText;
+                  btn.classList.remove('text-emerald-300');
+                }, 1800);
+              }
+            }
+          }}
           dangerouslySetInnerHTML={{ __html: html }}
         />
       </div>

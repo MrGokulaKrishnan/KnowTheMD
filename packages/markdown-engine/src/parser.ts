@@ -129,9 +129,9 @@ export function renderMarkdownToHtml(markdown: string, options: ParseOptions = {
           `<div class="relative my-4 rounded-xl border border-cyan-500/20 bg-slate-950/80 backdrop-blur-xl overflow-hidden shadow-xl group">
             <div class="flex items-center justify-between px-4 py-2 bg-slate-900/80 border-b border-cyan-500/15 text-xs text-slate-400 font-mono">
               <span class="text-cyan-400 font-semibold uppercase">${escapeHtml((codeLang || 'text').toUpperCase())}</span>
-              <button onclick="navigator.clipboard.writeText(decodeURIComponent('${encodeURIComponent(
+              <button data-copy-code="${encodeURIComponent(
                 rawCode
-              )}'))" class="px-2 py-0.5 rounded bg-cyan-500/10 hover:bg-cyan-500/25 text-cyan-300 transition-colors" title="Copy code">
+              )}" class="px-2 py-0.5 rounded bg-cyan-500/10 hover:bg-cyan-500/25 text-cyan-300 transition-colors cursor-pointer" title="Copy code">
                 Copy
               </button>
             </div>
@@ -294,53 +294,78 @@ export function renderMarkdownToHtml(markdown: string, options: ParseOptions = {
  * Inlines parser: Bold, Italic, Strikethrough, Code, Links, Images, Math
  */
 function renderInlines(text: string): string {
+  if (!text) return '';
+
+  const tokens: string[] = [];
+  const stash = (html: string): string => {
+    const placeholder = `\x1A${tokens.length}\x1A`;
+    tokens.push(html);
+    return placeholder;
+  };
+
   let s = text;
 
-  // Math blocks: $$...$$
+  // 1. Math blocks: $$...$$
   s = s.replace(/\$\$(.+?)\$\$/g, (_, math) => {
-    return `<span class="inline-block px-2 py-0.5 rounded bg-cyan-950/60 border border-cyan-500/30 text-cyan-300 font-mono text-sm">${escapeHtml(
-      math
-    )}</span>`;
+    return stash(
+      `<span class="inline-block px-2 py-0.5 rounded bg-cyan-950/60 border border-cyan-500/30 text-cyan-300 font-mono text-sm">${escapeHtml(
+        math
+      )}</span>`
+    );
   });
 
-  // Inline math: $...$
+  // 2. Inline math: $...$
   s = s.replace(/\$(.+?)\$/g, (_, math) => {
-    return `<span class="px-1.5 py-0.5 rounded bg-cyan-950/40 text-cyan-300 font-mono text-xs">${escapeHtml(
-      math
-    )}</span>`;
+    return stash(
+      `<span class="px-1.5 py-0.5 rounded bg-cyan-950/40 text-cyan-300 font-mono text-xs">${escapeHtml(
+        math
+      )}</span>`
+    );
   });
 
-  // Images: ![alt](url)
+  // 3. Inline code: `...`
+  s = s.replace(/`([^`]+)`/g, (_, code) => {
+    return stash(
+      `<code class="px-1.5 py-0.5 text-xs font-mono rounded-md bg-slate-900 border border-cyan-500/20 text-cyan-300">${escapeHtml(
+        code
+      )}</code>`
+    );
+  });
+
+  // 4. Images: ![alt](url)
   s = s.replace(/!\[(.*?)\]\((.*?)\)/g, (_, alt, url) => {
     const cleanUrl = sanitizeUrl(url);
     const safeAlt = escapeHtml(alt);
-    return `<span class="inline-block my-3"><img src="${cleanUrl}" alt="${safeAlt}" onerror="this.onerror=null;this.src='data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'200\\' height=\\'100\\' viewBox=\\'0 0 200 100\\'><rect width=\\'200\\' height=\\'100\\' fill=\\'%230f172a\\' rx=\\'8\\'/><text x=\\'50%\\' y=\\'50%\\' fill=\\'%2338bdf8\\' font-size=\\'12\\' text-anchor=\\'middle\\' dominant-baseline=\\'middle\\'>Image unavailable</text></svg>';" class="rounded-xl border border-cyan-500/20 max-w-full h-auto shadow-md" /><span class="block text-center text-xs text-slate-500 mt-1 italic">${safeAlt}</span></span>`;
+    return stash(
+      `<span class="inline-block my-3"><img src="${cleanUrl}" alt="${safeAlt}" loading="lazy" class="rounded-xl border border-cyan-500/20 max-w-full h-auto shadow-md" /><span class="block text-center text-xs text-slate-500 mt-1 italic">${safeAlt}</span></span>`
+    );
   });
 
-  // Links: [text](url)
+  // 5. Links: [text](url)
   s = s.replace(/\[(.*?)\]\((.*?)\)/g, (_, label, url) => {
     const cleanUrl = sanitizeUrl(url);
-    return `<a href="${cleanUrl}" target="_blank" rel="noopener noreferrer" class="text-cyan-400 hover:text-cyan-300 underline underline-offset-4 decoration-cyan-400/40 hover:decoration-cyan-400 transition-colors font-medium">${renderInlines(
-      label
-    )}</a>`;
+    return stash(
+      `<a href="${cleanUrl}" target="_blank" rel="noopener noreferrer" class="text-cyan-400 hover:text-cyan-300 underline underline-offset-4 decoration-cyan-400/40 hover:decoration-cyan-400 transition-colors font-medium">${renderInlines(
+        label
+      )}</a>`
+    );
   });
 
-  // Inline code: `...`
-  s = s.replace(/`([^`]+)`/g, (_, code) => {
-    return `<code class="px-1.5 py-0.5 text-xs font-mono rounded-md bg-slate-900 border border-cyan-500/20 text-cyan-300">${escapeHtml(
-      code
-    )}</code>`;
-  });
-
-  // Bold: **...**
+  // 6. Bold: **...**
   s = s.replace(/\*\*(.+?)\*\*/g, '<strong class="font-bold text-white">$1</strong>');
 
-  // Italic: *...* or _..._
+  // 7. Italic: *...* or _..._ (GFM word-boundary safe for underscores)
   s = s.replace(/\*([^*]+)\*/g, '<em class="italic text-slate-200">$1</em>');
-  s = s.replace(/_([^_]+)_/g, '<em class="italic text-slate-200">$1</em>');
+  s = s.replace(/(?:^|\s|\W)_([^_]+)_(?=\s|\W|$)/g, (match, p1) => {
+    const prefix = match.startsWith('_') ? '' : match[0];
+    return `${prefix}<em class="italic text-slate-200">${p1}</em>`;
+  });
 
-  // Strikethrough: ~~...~~
+  // 8. Strikethrough: ~~...~~
   s = s.replace(/~~(.+?)~~/g, '<del class="line-through text-slate-500">$1</del>');
+
+  // Restore stashed tokens (code, math, images, links)
+  s = s.replace(/\x1A(\d+)\x1A/g, (_, idx) => tokens[parseInt(idx, 10)]);
 
   return s;
 }

@@ -6,6 +6,7 @@ node_modules/
 # Production build outputs
 dist/
 dist-ssr/
+dist-release/
 build/
 out/
 *.local
@@ -16,14 +17,8 @@ release-builds/
 **/android/build/
 **/android/local.properties
 
-# Executable installers & binary archives
-*.exe
-*.msi
-*.dmg
-*.AppImage
-*.deb
-*.apk
-*.ipa
+# Large binary files & distribution packages
+test.tar.gz
 apps/website/public/downloads/
 
 # TypeScript build info cache

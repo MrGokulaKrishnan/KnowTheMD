@@ -16,8 +16,6 @@ import {
   Search,
   Download,
   Command,
-  Sun,
-  Moon,
   ListTree,
   Maximize2,
   FileDown,
@@ -36,8 +34,8 @@ export interface ToolbarProps {
   onSearch: () => void;
   onCommandPalette: () => void;
   onExport: (format: 'pdf' | 'html' | 'txt' | 'md') => void;
-  lightMode: boolean;
-  onToggleTheme: () => void;
+  lightMode?: boolean;
+  onToggleTheme?: () => void;
 }
 
 export const Toolbar: React.FC<ToolbarProps> = ({
@@ -51,8 +49,6 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   onSearch,
   onCommandPalette,
   onExport,
-  lightMode,
-  onToggleTheme,
 }) => {
   const exportItems: DropdownItem[] = [
     {
@@ -239,15 +235,6 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           }
           items={exportItems}
         />
-
-        {/* Theme Toggle */}
-        <button
-          onClick={onToggleTheme}
-          className="p-1.5 text-slate-400 hover:text-cyan-300 hover:bg-cyan-500/10 rounded-lg transition-colors"
-          title={lightMode ? 'Switch to Liquid Glass Dark' : 'Switch to Frosted Light'}
-        >
-          {lightMode ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
-        </button>
 
         {/* Outline Toggle */}
         <button

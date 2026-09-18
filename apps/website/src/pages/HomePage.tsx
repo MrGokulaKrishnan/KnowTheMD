@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { BrandLogo, GlassButton, GlassCard } from '@knowthemd/ui';
 import { renderMarkdownToHtml } from '@knowthemd/markdown-engine';
-import { detectUserPlatform, triggerDirectDownload } from '../releases';
+import { detectUserPlatform, triggerDirectDownload, getRecommendedArch, type ArchRelease } from '../releases';
+import { DownloadModal } from '../components/DownloadModal';
 import {
   Download,
   ArrowRight,
@@ -37,6 +38,7 @@ console.log("KnowTheMD Ready!");
 export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
   const [demoText, setDemoText] = useState(DEMO_MD);
   const [activeFaq, setActiveFaq] = useState<number | null>(0);
+  const [downloadingArch, setDownloadingArch] = useState<{ arch: ArchRelease; osName: string } | null>(null);
   const userPlatform = detectUserPlatform();
 
   const platformDisplayNames: Record<string, string> = {
@@ -106,8 +108,13 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
             size="lg"
             icon={<Download className="w-5 h-5" />}
             onClick={() => {
-              const res = triggerDirectDownload(userPlatform);
-              alert(`Starting direct download for ${platformDisplayNames[userPlatform]}: ${res.fileName}`);
+              const arch = getRecommendedArch(userPlatform);
+              if (arch && arch.available) {
+                setDownloadingArch({ arch, osName: platformDisplayNames[userPlatform] || 'Windows' });
+                triggerDirectDownload(userPlatform);
+              } else {
+                onNavigate('download');
+              }
             }}
             className="w-full sm:w-auto text-base px-8 py-3.5 shadow-[0_0_25px_rgba(0,240,255,0.4)]"
           >
@@ -156,6 +163,22 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
               </span>
               <div
                 className="prose prose-invert prose-xs text-slate-200"
+                onClick={(e) => {
+                  const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-copy-code]');
+                  if (btn) {
+                    const code = btn.getAttribute('data-copy-code');
+                    if (code) {
+                      navigator.clipboard.writeText(decodeURIComponent(code));
+                      const originalText = btn.textContent || 'Copy';
+                      btn.textContent = 'Copied!';
+                      btn.classList.add('text-emerald-300');
+                      setTimeout(() => {
+                        btn.textContent = originalText;
+                        btn.classList.remove('text-emerald-300');
+                      }, 1800);
+                    }
+                  }
+                }}
                 dangerouslySetInnerHTML={{ __html: html }}
               />
             </div>
@@ -282,6 +305,15 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
           </GlassButton>
         </div>
       </section>
+
+      {/* ── Download Started Modal ── */}
+      {downloadingArch && (
+        <DownloadModal
+          arch={downloadingArch.arch}
+          osName={downloadingArch.osName}
+          onClose={() => setDownloadingArch(null)}
+        />
+      )}
     </div>
   );
 };

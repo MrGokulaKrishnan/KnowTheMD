@@ -50,30 +50,8 @@ export const darkTokens: ThemeTokens = {
   warning: '#F59E0B',
 };
 
-export const lightTokens: ThemeTokens = {
-  bgBase: '#F8FAFC',
-  bgSubtle: '#EDF2F7',
-  surfaceGlass: 'rgba(255, 255, 255, 0.88)',
-  surfaceCard: 'rgba(255, 255, 255, 0.95)',
-  surfaceElevated: '#FFFFFF',
-  borderSubtle: 'rgba(2, 132, 199, 0.20)',
-  borderGlow: 'rgba(2, 132, 199, 0.55)',
-  borderHighlight: 'rgba(255, 255, 255, 0.85)',
-  primaryCyan: '#0284C7',
-  primaryBlue: '#0369A1',
-  brandGradient: 'linear-gradient(135deg, #0284C7 0%, #0369A1 100%)',
-  accentGlow: '0 0 20px rgba(2, 132, 199, 0.25)',
-  textMain: '#0F172A',
-  textMuted: '#475569',
-  textInverted: '#FFFFFF',
-  codeBg: '#F1F5F9',
-  codeText: '#0369A1',
-  activeItem: 'rgba(2, 132, 199, 0.12)',
-  hoverItem: 'rgba(0, 0, 0, 0.04)',
-  danger: '#DC2626',
-  success: '#059669',
-  warning: '#D97706',
-};
+// KnowTheMD is strictly and exclusively crafted in Liquid Glass Dark
+export const lightTokens: ThemeTokens = { ...darkTokens };
 
 export const fontFamilies = {
   ui: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif',
@@ -82,11 +60,7 @@ export const fontFamilies = {
   readingSans: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
 };
 
-export function getTokens(mode: ThemeMode): ThemeTokens {
-  if (mode === 'light') return lightTokens;
-  if (mode === 'dark') return darkTokens;
-  if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
-    return lightTokens;
-  }
+export function getTokens(_mode?: ThemeMode): ThemeTokens {
   return darkTokens;
 }
+

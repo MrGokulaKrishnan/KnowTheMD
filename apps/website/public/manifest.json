@@ -1,4 +1,4 @@
-﻿{
+{
   "name": "KnowTheMD — Markdown Reader & Editor",
   "short_name": "KnowTheMD",
   "description": "Read. Write. Understand Markdown. High-performance offline-first Markdown editor.",
@@ -10,16 +10,22 @@
   "orientation": "any",
   "icons": [
     {
-      "src": "/logo.jpg",
-      "sizes": "192x192 512x512",
-      "type": "image/jpeg",
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/logo.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "/logo-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
       "purpose": "any"
+    },
+    {
+      "src": "/logo.jpg",
+      "sizes": "1024x1024",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
     }
   ]
 }

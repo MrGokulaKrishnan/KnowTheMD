@@ -22,7 +22,7 @@ export const DocsPage: React.FC = () => {
     { id: 'editing', title: 'Editing Markdown', icon: <Edit className="w-4 h-4" /> },
     { id: 'syntax', title: 'Markdown Syntax', icon: <Code2 className="w-4 h-4" /> },
     { id: 'shortcuts', title: 'Keyboard Shortcuts', icon: <Keyboard className="w-4 h-4" /> },
-    { id: 'themes', title: 'Liquid Glass Themes', icon: <Palette className="w-4 h-4" /> },
+    { id: 'themes', title: 'Liquid Glass Theme', icon: <Palette className="w-4 h-4" /> },
     { id: 'export-pdf', title: 'Exporting PDF', icon: <FileDown className="w-4 h-4" /> },
     { id: 'mobile', title: 'Mobile Touch Usage', icon: <Smartphone className="w-4 h-4" /> },
     { id: 'troubleshooting', title: 'Troubleshooting', icon: <AlertTriangle className="w-4 h-4" /> },
@@ -173,15 +173,17 @@ export const DocsPage: React.FC = () => {
             {activeSection === 'themes' && (
               <div className="space-y-4">
                 <h2 className="text-2xl font-bold text-white border-b border-cyan-500/20 pb-2">
-                  Liquid Glass Theme System
+                  Liquid Glass Theme
                 </h2>
                 <p>
-                  KnowTheMD features two meticulously calibrated color schemes:
+                  KnowTheMD is tuned exclusively with the signature <strong>Liquid Glass Dark</strong> aesthetic across every operating system:
                 </p>
-                <ul className="list-disc list-inside space-y-2">
-                  <li><strong>Liquid Dark</strong>: Deep obsidian black canvas with electric cyan highlights and subtle glowing specular reflections.</li>
-                  <li><strong>Frosted Light</strong>: High-contrast cool white glass canvas with deep sapphire typography, meeting strict WCAG 2.1 AAA contrast benchmarks.</li>
-                </ul>
+                <div className="p-4 rounded-xl bg-slate-950/80 border border-cyan-500/25 space-y-2">
+                  <div className="font-semibold text-cyan-300">Liquid Glass Dark (Exclusive)</div>
+                  <p className="text-xs text-slate-300 leading-relaxed">
+                    Deep obsidian canvas with electric cyan highlights, specular reflections, and distraction-free contrast calibrated for long writing sessions without eye fatigue.
+                  </p>
+                </div>
               </div>
             )}
 

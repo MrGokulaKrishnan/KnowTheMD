@@ -1,0 +1,10 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  /* Minimal prose helpers for markdown preview rendering */
+  .prose-invert pre {
+    background-color: rgba(3, 7, 18, 0.85);
+  }
+}

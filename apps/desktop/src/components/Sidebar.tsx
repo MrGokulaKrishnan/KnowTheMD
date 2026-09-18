@@ -28,6 +28,7 @@ export interface SidebarProps {
   onOpenRecent: (item: RecentItem) => void;
   onOpenSettings: () => void;
   onOpenDiagnostics: () => void;
+  onGoHome?: () => void;
   lightMode?: boolean;
 }
 
@@ -44,7 +45,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onOpenRecent,
   onOpenSettings,
   onOpenDiagnostics,
-  lightMode = false,
+  onGoHome,
 }) => {
   const [showRecents, setShowRecents] = useState(true);
   const [showWorkspace, setShowWorkspace] = useState(true);
@@ -58,7 +59,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
     >
       {/* Brand Header */}
       <div className="p-4 border-b border-cyan-500/15 flex items-center justify-between">
-        <BrandLogo size={28} showText={true} lightMode={lightMode} />
+        <button
+          onClick={onGoHome}
+          className="flex items-center text-left group cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 rounded-xl p-1 -m-1 transition-transform hover:scale-[1.02] active:scale-[0.98]"
+          title="KnowTheMD Homepage (Click to open homepage / files)"
+        >
+          <BrandLogo size={28} showText={true} />
+        </button>
       </div>
 
       {/* Primary Actions */}

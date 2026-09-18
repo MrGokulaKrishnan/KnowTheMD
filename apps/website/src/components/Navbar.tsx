@@ -15,6 +15,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activePage, onNavigate }) => {
     { id: 'download', label: 'Download' },
     { id: 'docs', label: 'Documentation' },
     { id: 'changelog', label: 'Changelog' },
+    { id: 'support', label: 'Support' },
   ];
 
   return (

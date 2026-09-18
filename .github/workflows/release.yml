@@ -1,0 +1,480 @@
+name: KnowTheMD Release Pipeline
+
+# ─── Trigger ─────────────────────────────────────────────────────────────────
+# Runs when a versioned tag like v1.0.0 is pushed,
+# OR when manually triggered from the GitHub Actions UI.
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+  workflow_dispatch:
+    inputs:
+      version_tag:
+        description: 'Version tag to attach artifacts to (e.g. v1.0.0)'
+        required: false
+        default: 'v1.0.0'
+
+# ─── Permissions ─────────────────────────────────────────────────────────────
+permissions:
+  contents: write   # Needed to create GitHub Releases and upload artifacts
+
+# ─── Shared env ──────────────────────────────────────────────────────────────
+env:
+  NODE_VERSION: '22'
+
+# ─── Jobs ────────────────────────────────────────────────────────────────────
+jobs:
+
+  # ═══ 1. Windows — NSIS Installer + Portable ZIP ══════════════════════════
+  build-windows:
+    name: Build Windows (x64)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Build shared packages
+        run: npm run build --workspace=packages/editor --workspace=packages/markdown-engine --workspace=packages/ui --if-present
+
+      - name: Build desktop web bundle
+        run: npm run build --workspace=apps/desktop
+
+      - name: Install desktop dependencies (for electron-builder)
+        working-directory: apps/desktop
+        run: npm ci
+
+      - name: Build Windows installer (NSIS) and portable ZIP
+        working-directory: apps/desktop
+        run: npm run dist:win
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: List build output
+        working-directory: apps/desktop/dist-release
+        shell: pwsh
+        run: Get-ChildItem -Recurse | Where-Object { !$_.PSIsContainer }
+
+      - name: Compute SHA-256 checksums
+        working-directory: apps/desktop/dist-release
+        shell: pwsh
+        run: |
+          Get-ChildItem -File -Include "*.exe","*.zip" -Recurse | ForEach-Object {
+            $hash = (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLower()
+            "$hash  $($_.Name)" | Out-File -Append -FilePath "$env:GITHUB_WORKSPACE/windows-checksums.txt"
+            Write-Host "$hash  $($_.Name)"
+          }
+
+      - name: Validate Windows executable
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem "apps/desktop/dist-release" -Filter "*.exe" -Recurse | Select-Object -First 1
+          if ($null -eq $exe) { Write-Error "No EXE found!"; exit 1 }
+          $size = $exe.Length
+          if ($size -lt 50MB) { Write-Error "EXE is suspiciously small: $size bytes"; exit 1 }
+          # Verify MZ header (Windows PE)
+          $bytes = [System.IO.File]::ReadAllBytes($exe.FullName) | Select-Object -First 2
+          $header = ($bytes | ForEach-Object { $_.ToString("X2") }) -join ""
+          if ($header -ne "4D5A") { Write-Error "EXE does not have MZ header — not a valid PE file!"; exit 1 }
+          Write-Host "✅ Windows EXE validated: $($exe.Name) ($([math]::Round($size/1MB,1)) MB), MZ header: $header"
+
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-release
+          path: |
+            apps/desktop/dist-release/*.exe
+            apps/desktop/dist-release/*.zip
+            windows-checksums.txt
+          if-no-files-found: error
+
+  # ═══ 2. macOS — Universal DMG ════════════════════════════════════════════
+  build-macos:
+    name: Build macOS (Universal DMG)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Build shared packages
+        run: npm run build --workspace=packages/editor --workspace=packages/markdown-engine --workspace=packages/ui --if-present
+
+      - name: Build desktop web bundle
+        run: npm run build --workspace=apps/desktop
+
+      - name: Install desktop dependencies
+        working-directory: apps/desktop
+        run: npm ci
+
+      - name: Build macOS Universal DMG
+        working-directory: apps/desktop
+        run: npm run dist:mac
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Uncomment when Apple Developer account is configured:
+          # APPLE_ID: ${{ secrets.APPLE_ID }}
+          # APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          # APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+
+      - name: Compute SHA-256 checksums
+        run: |
+          find apps/desktop/dist-release -name "*.dmg" | while read f; do
+            hash=$(shasum -a 256 "$f" | awk '{print $1}')
+            echo "$hash  $(basename $f)" | tee -a macos-checksums.txt
+          done
+
+      - name: Validate macOS DMG
+        run: |
+          dmg=$(find apps/desktop/dist-release -name "*.dmg" | head -1)
+          if [ -z "$dmg" ]; then echo "ERROR: No DMG found!"; exit 1; fi
+          size=$(stat -f%z "$dmg")
+          if [ "$size" -lt 52428800 ]; then echo "ERROR: DMG too small ($size bytes)"; exit 1; fi
+          echo "✅ macOS DMG: $(basename $dmg) ($(echo "$size / 1048576" | bc) MB)"
+
+      - name: Upload macOS artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-release
+          path: |
+            apps/desktop/dist-release/*.dmg
+            macos-checksums.txt
+          if-no-files-found: error
+
+  # ═══ 3. Linux — AppImage + DEB ═══════════════════════════════════════════
+  build-linux:
+    name: Build Linux (AppImage + DEB)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install system dependencies (for electron-builder)
+        run: sudo apt-get update && sudo apt-get install -y rpm fakeroot libopenjp2-tools
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Build shared packages
+        run: npm run build --workspace=packages/editor --workspace=packages/markdown-engine --workspace=packages/ui --if-present
+
+      - name: Build desktop web bundle
+        run: npm run build --workspace=apps/desktop
+
+      - name: Install desktop dependencies
+        working-directory: apps/desktop
+        run: npm ci
+
+      - name: Build Linux AppImage and DEB
+        working-directory: apps/desktop
+        run: npm run dist:linux
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compute SHA-256 checksums
+        run: |
+          find apps/desktop/dist-release \( -name "*.AppImage" -o -name "*.deb" \) | while read f; do
+            hash=$(sha256sum "$f" | awk '{print $1}')
+            echo "$hash  $(basename $f)" | tee -a linux-checksums.txt
+          done
+
+      - name: Validate Linux artifacts
+        run: |
+          appimage=$(find apps/desktop/dist-release -name "*.AppImage" | head -1)
+          deb=$(find apps/desktop/dist-release -name "*.deb" | head -1)
+          if [ -z "$appimage" ]; then echo "ERROR: No AppImage found!"; exit 1; fi
+          if [ -z "$deb" ]; then echo "ERROR: No DEB found!"; exit 1; fi
+          # Validate ELF header for AppImage
+          header=$(xxd -l 4 "$appimage" | awk '{print $2$3}')
+          if [[ ! "$header" == *"7f454c46"* ]]; then echo "ERROR: AppImage does not have ELF header!"; exit 1; fi
+          echo "✅ Linux AppImage: $(basename $appimage)"
+          echo "✅ Linux DEB:      $(basename $deb)"
+
+      - name: Upload Linux artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-release
+          path: |
+            apps/desktop/dist-release/*.AppImage
+            apps/desktop/dist-release/*.deb
+            linux-checksums.txt
+          if-no-files-found: error
+
+  # ═══ 4. Android — Release APK ════════════════════════════════════════════
+  build-android:
+    name: Build Android (Release APK)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Build mobile web bundle
+        run: npm run build --workspace=apps/mobile
+
+      - name: Sync Capacitor assets into Android project
+        working-directory: apps/mobile
+        run: npx cap sync android
+
+      - name: Decode release keystore
+        if: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > apps/mobile/android/app/knowthemd-release.jks
+          echo "KEYSTORE_EXISTS=true" >> $GITHUB_ENV
+
+      - name: Build release APK (signed)
+        if: ${{ env.KEYSTORE_EXISTS == 'true' }}
+        working-directory: apps/mobile/android
+        run: |
+          ./gradlew assembleRelease \
+            -Pandroid.injected.signing.store.file=$GITHUB_WORKSPACE/apps/mobile/android/app/knowthemd-release.jks \
+            -Pandroid.injected.signing.store.password=${{ secrets.ANDROID_KEYSTORE_PASSWORD }} \
+            -Pandroid.injected.signing.key.alias=${{ secrets.ANDROID_KEY_ALIAS }} \
+            -Pandroid.injected.signing.key.password=${{ secrets.ANDROID_KEY_PASSWORD }}
+
+      - name: Build debug APK (fallback if no keystore)
+        if: ${{ env.KEYSTORE_EXISTS != 'true' }}
+        working-directory: apps/mobile/android
+        run: |
+          echo "⚠️  No release keystore configured — building debug APK"
+          ./gradlew assembleDebug
+
+      - name: Find and rename APK
+        run: |
+          # Try release first, fall back to debug
+          apk=$(find apps/mobile/android/app/build/outputs/apk -name "*.apk" | grep -i release | head -1)
+          if [ -z "$apk" ]; then
+            apk=$(find apps/mobile/android/app/build/outputs/apk -name "*.apk" | head -1)
+          fi
+          if [ -z "$apk" ]; then echo "ERROR: No APK found!"; exit 1; fi
+          echo "Found APK: $apk"
+          mkdir -p android-release
+          cp "$apk" "android-release/KnowTheMD-1.0.0-android.apk"
+
+      - name: Compute SHA-256
+        run: |
+          hash=$(sha256sum android-release/KnowTheMD-1.0.0-android.apk | awk '{print $1}')
+          echo "$hash  KnowTheMD-1.0.0-android.apk" | tee android-checksums.txt
+          echo "APK_SHA256=$hash" >> $GITHUB_ENV
+
+      - name: Validate APK
+        run: |
+          apk="android-release/KnowTheMD-1.0.0-android.apk"
+          size=$(stat -c%s "$apk")
+          if [ "$size" -lt 1000000 ]; then echo "ERROR: APK too small ($size bytes)"; exit 1; fi
+          # Validate ZIP/PK header (APKs are ZIP files)
+          header=$(xxd -l 4 "$apk" | awk '{print $2$3}')
+          if [[ "$header" != *"504b0304"* ]]; then echo "ERROR: APK does not have PK ZIP header!"; exit 1; fi
+          echo "✅ Android APK: KnowTheMD-1.0.0-android.apk ($size bytes)"
+          echo "   SHA-256: $APK_SHA256"
+
+      - name: Upload Android artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-release
+          path: |
+            android-release/KnowTheMD-1.0.0-android.apk
+            android-checksums.txt
+          if-no-files-found: error
+
+  # ═══ 5. Website + Deploy ══════════════════════════════════════════════════
+  deploy-website:
+    name: Build Website & Deploy
+    runs-on: ubuntu-latest
+    needs: [build-windows, build-macos, build-linux, build-android]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Build shared packages
+        run: npm run build --workspace=packages/editor --workspace=packages/markdown-engine --workspace=packages/ui --if-present
+
+      - name: Build website
+        run: npm run build --workspace=apps/website
+
+      - name: Create downloads directory in dist
+        run: mkdir -p apps/website/dist/downloads
+
+      - name: Download Windows artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-release
+          path: /tmp/windows-release
+
+      - name: Download macOS artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: macos-release
+          path: /tmp/macos-release
+
+      - name: Download Linux artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-release
+          path: /tmp/linux-release
+
+      - name: Download Android artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: android-release
+          path: /tmp/android-release
+
+      - name: Copy release artifacts into dist/downloads
+        run: |
+          # Android APK
+          cp /tmp/android-release/KnowTheMD-1.0.0-android.apk apps/website/dist/downloads/
+          echo "✅ Copied Android APK"
+
+          # Windows
+          if ls /tmp/windows-release/*.exe 2>/dev/null; then
+            cp /tmp/windows-release/*.exe apps/website/dist/downloads/
+            echo "✅ Copied Windows EXE"
+          fi
+          if ls /tmp/windows-release/*.zip 2>/dev/null; then
+            cp /tmp/windows-release/*.zip apps/website/dist/downloads/
+            echo "✅ Copied Windows ZIP"
+          fi
+
+          # macOS
+          if ls /tmp/macos-release/*.dmg 2>/dev/null; then
+            cp /tmp/macos-release/*.dmg apps/website/dist/downloads/
+            echo "✅ Copied macOS DMG(s)"
+          fi
+
+          # Linux
+          if ls /tmp/linux-release/*.AppImage 2>/dev/null; then
+            cp /tmp/linux-release/*.AppImage apps/website/dist/downloads/
+            echo "✅ Copied Linux AppImage"
+          fi
+          if ls /tmp/linux-release/*.deb 2>/dev/null; then
+            cp /tmp/linux-release/*.deb apps/website/dist/downloads/
+            echo "✅ Copied Linux DEB"
+          fi
+
+          echo ""
+          echo "Contents of dist/downloads:"
+          ls -lah apps/website/dist/downloads/
+
+      - name: Verify no artifact is HTML
+        run: |
+          for f in apps/website/dist/downloads/*; do
+            header=$(head -c 15 "$f" 2>/dev/null | cat)
+            if echo "$header" | grep -qi "<!doctype\|<html"; then
+              echo "❌ CRITICAL: $f appears to be HTML — aborting deploy"
+              exit 1
+            fi
+            echo "✅ Binary check passed: $(basename $f)"
+          done
+
+      - name: Deploy to Firebase Hosting
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          channelId: live
+          projectId: knowthemd
+
+      - name: Post-deploy validation
+        run: |
+          sleep 15  # Wait for CDN propagation
+          node scripts/validate-downloads.js https://knowthemd.com
+
+  # ═══ 6. Create GitHub Release ════════════════════════════════════════════
+  create-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: [deploy-website]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: /tmp/all-artifacts
+
+      - name: Assemble release notes
+        run: |
+          VERSION="${{ github.ref_name || github.event.inputs.version_tag }}"
+          cat > release-notes.md << EOF
+          # KnowTheMD ${VERSION}
+
+          **Read. Write. Understand Markdown.** — A production-quality cross-platform Markdown editor.
+
+          ## Downloads
+
+          | Platform | File | Notes |
+          |---|---|---|
+          | 🪟 Windows x64 Setup | KnowTheMD_Windows_x64_Setup.exe | Recommended for most users |
+          | 🪟 Windows x64 Portable | KnowTheMD_Windows_x64.zip | No install required |
+          | 🍎 macOS Universal | KnowTheMD-*-universal.dmg | Apple Silicon + Intel |
+          | 🍎 macOS Apple Silicon | KnowTheMD-*-arm64.dmg | M1/M2/M3/M4 |
+          | 🍎 macOS Intel | KnowTheMD-*-x64.dmg | Intel only |
+          | 🐧 Linux AppImage | KnowTheMD-*.AppImage | All distros |
+          | 🐧 Linux Debian/Ubuntu | knowthemd_*_amd64.deb | Ubuntu/Debian |
+          | 🤖 Android | KnowTheMD-1.0.0-android.apk | Android 7.0+ |
+
+          ## Checksums (SHA-256)
+
+          \`\`\`
+          EOF
+          cat /tmp/all-artifacts/windows-release/windows-checksums.txt >> release-notes.md 2>/dev/null || true
+          cat /tmp/all-artifacts/macos-release/macos-checksums.txt >> release-notes.md 2>/dev/null || true
+          cat /tmp/all-artifacts/linux-release/linux-checksums.txt >> release-notes.md 2>/dev/null || true
+          cat /tmp/all-artifacts/android-release/android-checksums.txt >> release-notes.md 2>/dev/null || true
+          echo '```' >> release-notes.md
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name || github.event.inputs.version_tag }}
+          name: KnowTheMD ${{ github.ref_name || github.event.inputs.version_tag }}
+          body_path: release-notes.md
+          files: |
+            /tmp/all-artifacts/windows-release/*.exe
+            /tmp/all-artifacts/windows-release/*.zip
+            /tmp/all-artifacts/macos-release/*.dmg
+            /tmp/all-artifacts/linux-release/*.AppImage
+            /tmp/all-artifacts/linux-release/*.deb
+            /tmp/all-artifacts/android-release/KnowTheMD-1.0.0-android.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -44,31 +44,33 @@ export const GlassModal: React.FC<GlassModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/75 backdrop-blur-md transition-opacity animate-fade-in"
+        className="fixed inset-0 bg-black/80 backdrop-blur-md transition-opacity animate-fade-in"
         onClick={onClose}
         aria-hidden="true"
       />
 
-      {/* Modal Dialog */}
+      {/* Modal Dialog Box */}
       <div
-        className={`relative w-full ${maxWidthClasses[maxWidth]} bg-slate-900/90 backdrop-blur-2xl border border-cyan-500/25 rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.6),0_0_35px_rgba(0,240,255,0.15)] z-10 overflow-hidden animate-scale-up`}
+        className={`relative w-full ${maxWidthClasses[maxWidth]} max-h-[90vh] flex flex-col bg-slate-900/95 backdrop-blur-2xl border border-cyan-500/30 rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.7),0_0_35px_rgba(0,240,255,0.18)] z-10 overflow-hidden animate-scale-up`}
         role="dialog"
         aria-modal="true"
       >
         {/* Top glossy specular bar */}
-        <div className="absolute inset-x-0 top-0 h-[1.5px] bg-gradient-to-r from-transparent via-cyan-400 to-transparent" />
+        <div className="absolute inset-x-0 top-0 h-[1.5px] bg-gradient-to-r from-transparent via-cyan-400 to-transparent shrink-0" />
 
         {/* Header */}
         {(title || showCloseButton) && (
-          <div className="flex items-center justify-between px-6 py-4 border-b border-cyan-500/15">
-            <div className="text-lg font-semibold text-white tracking-wide">{title}</div>
+          <div className="flex items-center justify-between px-5 py-3.5 border-b border-cyan-500/15 shrink-0 min-w-0">
+            <div className="text-base sm:text-lg font-semibold text-white tracking-wide truncate mr-2">
+              {title}
+            </div>
             {showCloseButton && (
               <button
                 onClick={onClose}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-cyan-300 hover:bg-cyan-500/10 transition-colors"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-cyan-300 hover:bg-cyan-500/10 transition-colors shrink-0"
                 aria-label="Close dialog"
               >
                 <X className="w-5 h-5" />
@@ -77,8 +79,10 @@ export const GlassModal: React.FC<GlassModalProps> = ({
           </div>
         )}
 
-        {/* Content */}
-        <div className="p-6">{children}</div>
+        {/* Content with strict overflow containment and word wrapping */}
+        <div className="p-5 sm:p-6 overflow-y-auto flex-1 min-w-0 w-full break-words [overflow-wrap:anywhere]">
+          {children}
+        </div>
       </div>
     </div>
   );

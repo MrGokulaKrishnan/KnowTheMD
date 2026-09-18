@@ -163,41 +163,20 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           {activeTab === 'appearance' && (
             <div className="space-y-4">
               <h4 className="text-sm font-semibold text-white">Visual Theme</h4>
-              <div className="grid grid-cols-3 gap-3">
-                <button
-                  onClick={() => onUpdateSettings({ theme: 'dark' })}
-                  className={`p-3 rounded-xl border text-center transition-all cursor-pointer ${
-                    settings.theme === 'dark'
-                      ? 'bg-cyan-500/20 border-cyan-400 text-cyan-300 shadow-[0_0_15px_rgba(0,240,255,0.2)]'
-                      : 'bg-slate-950/50 border-cyan-500/15 text-slate-400 hover:text-white'
-                  }`}
-                >
-                  <div className="font-semibold mb-1">Liquid Dark</div>
-                  <div className="text-[10px] text-slate-500">Deep Obsidian & Glow</div>
-                </button>
-                <button
-                  onClick={() => onUpdateSettings({ theme: 'light' })}
-                  className={`p-3 rounded-xl border text-center transition-all cursor-pointer ${
-                    settings.theme === 'light'
-                      ? 'bg-cyan-500/20 border-cyan-400 text-cyan-300 shadow-[0_0_15px_rgba(0,240,255,0.2)]'
-                      : 'bg-slate-950/50 border-cyan-500/15 text-slate-400 hover:text-white'
-                  }`}
-                >
-                  <div className="font-semibold mb-1">Frosted Light</div>
-                  <div className="text-[10px] text-slate-500">High Contrast Glass</div>
-                </button>
-                <button
-                  onClick={() => onUpdateSettings({ theme: 'system' })}
-                  className={`p-3 rounded-xl border text-center transition-all cursor-pointer ${
-                    settings.theme === 'system'
-                      ? 'bg-cyan-500/20 border-cyan-400 text-cyan-300 shadow-[0_0_15px_rgba(0,240,255,0.2)]'
-                      : 'bg-slate-950/50 border-cyan-500/15 text-slate-400 hover:text-white'
-                  }`}
-                >
-                  <div className="font-semibold mb-1">System</div>
-                  <div className="text-[10px] text-slate-500">Match OS Appearance</div>
-                </button>
+              <div className="p-4 rounded-xl border border-cyan-400 bg-cyan-500/20 text-cyan-300 shadow-[0_0_15px_rgba(0,240,255,0.2)] flex items-center justify-between">
+                <div>
+                  <div className="font-semibold text-white mb-0.5">Liquid Glass Dark (Exclusive)</div>
+                  <div className="text-[11px] text-slate-300">
+                    Deep obsidian canvas with electric cyan gradients, specular reflections, and distraction-free contrast.
+                  </div>
+                </div>
+                <span className="px-2.5 py-1 rounded-full bg-cyan-400/20 text-cyan-300 text-[10px] font-bold uppercase tracking-wider border border-cyan-400/40">
+                  Active
+                </span>
               </div>
+              <p className="text-[11px] text-slate-400">
+                KnowTheMD is tuned exclusively with the signature Liquid Glass Dark design language across all platforms for optimal optical clarity and reduced eye strain.
+              </p>
             </div>
           )}
 

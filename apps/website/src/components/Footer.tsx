@@ -96,7 +96,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
         {/* Legal & Trust */}
         <div>
           <h4 className="text-white font-semibold mb-3 uppercase tracking-wider text-[11px]">
-            Trust & Security
+            Trust & Compliance
           </h4>
           <ul className="space-y-2">
             <li>
@@ -110,13 +110,23 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
               </button>
             </li>
             <li>
-              <button onClick={() => onNavigate('docs')} className="hover:text-cyan-400">
-                Security Policy & Threat Model
+              <button onClick={() => onNavigate('legal')} className="hover:text-cyan-400">
+                Cookie Policy (0 Tracking)
               </button>
             </li>
             <li>
-              <button onClick={() => onNavigate('docs')} className="hover:text-cyan-400">
-                Open Source Attributions
+              <button onClick={() => onNavigate('legal')} className="hover:text-cyan-400">
+                Security &amp; Responsible Disclosure
+              </button>
+            </li>
+            <li>
+              <button onClick={() => onNavigate('legal')} className="hover:text-cyan-400">
+                Accessibility Statement
+              </button>
+            </li>
+            <li>
+              <button onClick={() => onNavigate('support')} className="hover:text-cyan-400">
+                Support &amp; Help Center
               </button>
             </li>
           </ul>
