@@ -118,6 +118,20 @@ export const SupportPage: React.FC = () => {
           KnowTheMD is community-supported and open source. Check our discussion board, issues tracker, or release logs.
         </p>
         <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
+          <GlassButton
+            variant="primary"
+            icon={<Bug className="w-4 h-4" />}
+            onClick={() => window.dispatchEvent(new CustomEvent('open-bug-report'))}
+          >
+            Report a Bug
+          </GlassButton>
+          <GlassButton
+            variant="secondary"
+            icon={<ExternalLink className="w-4 h-4" />}
+            onClick={() => window.dispatchEvent(new CustomEvent('open-contact-developer'))}
+          >
+            Contact Developer
+          </GlassButton>
           <a
             href="https://github.com/MrGokulaKrishnan/KnowTheMD/issues"
             target="_blank"
@@ -125,15 +139,6 @@ export const SupportPage: React.FC = () => {
           >
             <GlassButton variant="secondary" icon={<ExternalLink className="w-4 h-4" />}>
               Open GitHub Issues
-            </GlassButton>
-          </a>
-          <a
-            href="https://github.com/MrGokulaKrishnan/KnowTheMD/releases"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <GlassButton variant="secondary" icon={<ExternalLink className="w-4 h-4" />}>
-              Release Notes & Checksums
             </GlassButton>
           </a>
         </div>

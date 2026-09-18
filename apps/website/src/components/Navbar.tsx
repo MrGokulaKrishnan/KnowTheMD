@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { BrandLogo, GlassButton } from '@knowthemd/ui';
-import { Menu, X, Download, Github } from 'lucide-react';
+import { Menu, X, Download, Github, Bug } from 'lucide-react';
 
 export interface NavbarProps {
   activePage: string;
@@ -60,6 +60,13 @@ export const Navbar: React.FC<NavbarProps> = ({ activePage, onNavigate }) => {
           >
             <Github className="w-5 h-5" />
           </a>
+          <button
+            onClick={() => window.dispatchEvent(new CustomEvent('open-bug-report'))}
+            className="p-2 text-slate-400 hover:text-rose-400 transition-colors"
+            title="Report a Bug"
+          >
+            <Bug className="w-5 h-5" />
+          </button>
           <a href="/app/" target="_blank" rel="noopener noreferrer">
             <GlassButton
               variant="secondary"

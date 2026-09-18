@@ -10,7 +10,7 @@ import { SupportPage } from './pages/SupportPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { AboutAppModal } from '@knowthemd/ui';
 import { WifiOff } from 'lucide-react';
-
+import { FloatingSupportWidget } from './components/support/FloatingSupportWidget';
 
 export const App: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<string>('home');
@@ -101,6 +101,8 @@ export const App: React.FC = () => {
         isOpen={isAboutOpen}
         onClose={() => setIsAboutOpen(false)}
       />
+      
+      <FloatingSupportWidget />
     </div>
   );
 };

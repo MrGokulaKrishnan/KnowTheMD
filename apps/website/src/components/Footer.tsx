@@ -142,6 +142,16 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onOpenAbout }) => {
                 Support &amp; Help Center
               </button>
             </li>
+            <li>
+              <button onClick={() => window.dispatchEvent(new CustomEvent('open-bug-report'))} className="hover:text-cyan-400">
+                Report a Bug
+              </button>
+            </li>
+            <li>
+              <button onClick={() => window.dispatchEvent(new CustomEvent('open-contact-developer'))} className="hover:text-cyan-400">
+                Contact Developer
+              </button>
+            </li>
           </ul>
         </div>
       </div>
