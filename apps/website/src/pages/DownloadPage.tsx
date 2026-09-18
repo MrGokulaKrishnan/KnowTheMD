@@ -9,6 +9,7 @@ import {
 } from '../releases';
 import { GlassCard, GlassButton } from '@knowthemd/ui';
 import { DownloadModal } from '../components/DownloadModal';
+import { AppDetailsSection } from '../components/AppDetailsSection';
 import {
   Download,
   Copy,
@@ -293,6 +294,16 @@ export const DownloadPage: React.FC = () => {
             </button>
           </p>
         )}
+
+        <div className="pt-3">
+          <a
+            href="#app-details"
+            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-400/20 text-cyan-300 text-xs font-semibold hover:bg-cyan-500/20 transition-all shadow-[0_0_15px_rgba(0,240,255,0.15)]"
+          >
+            <Smartphone className="w-3.5 h-3.5 text-cyan-400" />
+            <span>App Details, Release Notes &amp; Device Compatibility ↓</span>
+          </a>
+        </div>
       </div>
 
       {/* ── Platform Selector ── */}
@@ -377,6 +388,8 @@ export const DownloadPage: React.FC = () => {
         </GlassCard>
       </div>
 
+      {/* ── Play Store Style App Details & Compatibility Section ── */}
+      <AppDetailsSection />
 
       {/* ── Integrity Notice ── */}
       {hasAvailableDownload && (

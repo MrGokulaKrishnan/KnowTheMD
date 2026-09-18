@@ -29,7 +29,7 @@ export const App: React.FC = () => {
     // 2. Check pathname
     const path = window.location.pathname.replace(/^\/|\/$/g, '').toLowerCase();
     if (!path || path === '' || path === 'home') return 'home';
-    if (path === 'download' || path === 'downloads') return 'download';
+    if (path === 'download' || path === 'downloads' || path === 'details' || path === 'app-info' || path === 'info') return 'download';
     if (path === 'docs' || path === 'documentation') return 'docs';
     if (path === 'changelog' || path === 'releases') return 'changelog';
     if (path === 'legal' || path === 'privacy' || path === 'terms' || path === 'cookies' || path === 'security' || path === 'accessibility') {
