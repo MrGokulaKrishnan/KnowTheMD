@@ -213,19 +213,44 @@ const AppStorePanel: React.FC<{ platform: PlatformRelease }> = ({ platform }) =>
   </div>
 );
 
-// ─── Sideloading Warning for Android ─────────────────────────────────────────
+// ─── Installation Notices ───────────────────────────────────────────────────
 
 const AndroidSideloadNotice: React.FC = () => (
   <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/8 border border-amber-400/20 text-xs text-amber-300/80 mt-4">
     <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-amber-400" />
     <p>
-      <span className="font-semibold text-amber-300">Installation note:</span> This APK is
-      distributed outside the Google Play Store. Android will ask you to allow "Install from
-      unknown sources" in your device settings before installation — this is normal for
-      direct APK distribution. Enable it only for trusted sources.
+      <span className="font-semibold text-amber-300">Android Installation:</span> Allow "Install from unknown sources" in device Settings if prompted when opening the APK.
     </p>
   </div>
 );
+
+const IosInstallNotice: React.FC = () => (
+  <div className="flex items-start gap-2 p-3 rounded-lg bg-cyan-500/10 border border-cyan-400/20 text-xs text-cyan-200/90 mt-4">
+    <Shield className="w-4 h-4 shrink-0 mt-0.5 text-cyan-400" />
+    <p>
+      <span className="font-semibold text-cyan-300">iOS Installation:</span> Download the <strong className="text-white">.mobileconfig</strong> profile on your iPhone/iPad and tap <strong className="text-white">Settings &rarr; Profile Downloaded &rarr; Install</strong> for 1-tap home screen installation, or use the <strong className="text-white">.ipa</strong> with AltStore / TrollStore / Sideloadly.
+    </p>
+  </div>
+);
+
+const MacInstallNotice: React.FC = () => (
+  <div className="flex items-start gap-2 p-3 rounded-lg bg-slate-900/60 border border-slate-700/40 text-xs text-slate-300 mt-4">
+    <Shield className="w-4 h-4 shrink-0 mt-0.5 text-cyan-400" />
+    <p>
+      <span className="font-semibold text-white">macOS Installation:</span> Download the <strong className="text-white">.zip</strong>, double-click to extract <strong className="text-cyan-300">KnowTheMD.app</strong>, and move it to your <code className="text-cyan-300 bg-slate-800 px-1 py-0.5 rounded">/Applications</code> folder.
+    </p>
+  </div>
+);
+
+const LinuxInstallNotice: React.FC = () => (
+  <div className="flex items-start gap-2 p-3 rounded-lg bg-slate-900/60 border border-slate-700/40 text-xs text-slate-300 mt-4">
+    <Terminal className="w-4 h-4 shrink-0 mt-0.5 text-cyan-400" />
+    <p>
+      <span className="font-semibold text-white">Linux Installation:</span> Extract the <strong className="text-white">.tar.gz</strong> and execute <code className="text-cyan-300 bg-slate-800 px-1 py-0.5 rounded">./knowthemd-desktop</code>, or mark the <strong className="text-white">.AppImage</strong> executable with <code className="text-cyan-300 bg-slate-800 px-1 py-0.5 rounded">chmod +x</code> and run.
+    </p>
+  </div>
+);
+
 
 // ─── Download Page ────────────────────────────────────────────────────────────
 
@@ -342,12 +367,16 @@ export const DownloadPage: React.FC = () => {
                 />
               ))}
 
-              {/* Android sideload notice */}
+              {/* Platform specific installation notices */}
               {currentRelease.id === 'android' && <AndroidSideloadNotice />}
+              {currentRelease.id === 'ios' && <IosInstallNotice />}
+              {currentRelease.id === 'macos' && <MacInstallNotice />}
+              {currentRelease.id === 'linux' && <LinuxInstallNotice />}
             </div>
           )}
         </GlassCard>
       </div>
+
 
       {/* ── Integrity Notice ── */}
       {hasAvailableDownload && (

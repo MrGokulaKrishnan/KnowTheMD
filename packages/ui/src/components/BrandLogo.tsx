@@ -23,9 +23,10 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
         alt="KnowTheMD Logo"
         width={size}
         height={size}
-        style={{ width: `${size}px`, height: `${size}px` }}
-        className="shrink-0 object-contain rounded-xl shadow-[0_0_15px_rgba(0,240,255,0.3)] transition-transform duration-300 hover:scale-105"
+        style={{ width: `${size}px`, height: `${size}px`, borderRadius: '10%' }}
+        className="shrink-0 aspect-square object-cover rounded-[10%] shadow-[0_0_15px_rgba(0,240,255,0.3)] transition-transform duration-300 hover:scale-105"
       />
+
 
       {showText && (
         <div className="flex flex-col justify-center text-left">

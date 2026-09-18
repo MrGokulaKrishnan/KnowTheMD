@@ -46,12 +46,16 @@
   <body class="h-screen w-screen bg-[#030712] text-slate-100 antialiased">
     <div id="root" class="h-full w-full"></div>
     <script>
+      // Electron desktop app: clean up any legacy or rogue service worker registrations
       if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js').catch(() => {});
-        });
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+          for (var i = 0; i < registrations.length; i++) {
+            registrations[i].unregister();
+          }
+        }).catch(function() {});
       }
     </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
+

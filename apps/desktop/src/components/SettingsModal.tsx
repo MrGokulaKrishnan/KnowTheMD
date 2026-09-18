@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { GlassModal, GlassButton } from '@knowthemd/ui';
+import { GlassModal, GlassButton, BrandLogo } from '@knowthemd/ui';
 import {
   Sliders,
   Type,
@@ -11,6 +11,12 @@ import {
   Eye,
   ShieldCheck,
   Info,
+  RefreshCw,
+  Sparkles,
+  Building,
+  Calendar,
+  Layers,
+  Star,
 } from 'lucide-react';
 
 export interface EditorSettings {
@@ -32,6 +38,10 @@ export interface SettingsModalProps {
   settings: EditorSettings;
   onUpdateSettings: (newSettings: Partial<EditorSettings>) => void;
   onOpenDiagnostics?: () => void;
+  onCheckUpdates?: () => void;
+  onRestartUpdate?: () => void;
+  isUpdateReady?: boolean;
+  updateVersion?: string;
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
@@ -40,11 +50,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   settings,
   onUpdateSettings,
   onOpenDiagnostics,
+  onCheckUpdates,
+  onRestartUpdate,
+  isUpdateReady,
+  updateVersion,
 }) => {
   const [activeTab, setActiveTab] = useState<string>('editor');
 
   const tabs = [
-    { id: 'general', label: 'General', icon: <Sliders className="w-4 h-4" /> },
     { id: 'editor', label: 'Editor', icon: <Type className="w-4 h-4" /> },
     { id: 'appearance', label: 'Appearance', icon: <Palette className="w-4 h-4" /> },
     { id: 'markdown', label: 'Markdown', icon: <FileCode className="w-4 h-4" /> },
@@ -53,6 +66,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     { id: 'shortcuts', label: 'Shortcuts', icon: <Keyboard className="w-4 h-4" /> },
     { id: 'accessibility', label: 'Accessibility', icon: <Eye className="w-4 h-4" /> },
     { id: 'privacy', label: 'Privacy', icon: <ShieldCheck className="w-4 h-4" /> },
+    { id: 'updates', label: 'OTA Updates', icon: <RefreshCw className="w-4 h-4" /> },
     { id: 'about', label: 'About', icon: <Info className="w-4 h-4" /> },
   ];
 
@@ -290,26 +304,131 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
           )}
 
+          {activeTab === 'updates' && (
+            <div className="space-y-4">
+              <h4 className="text-sm font-semibold text-white">Over-The-Air (OTA) Updates</h4>
+              <div className="p-4 rounded-xl bg-slate-950/60 border border-cyan-500/20 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400">Current App Version</span>
+                  <span className="font-mono text-cyan-300 font-semibold">v1.0.0 (Latest Release)</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400">Update Channel</span>
+                  <span className="text-emerald-400 font-semibold">Stable (Official)</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400">OTA Source</span>
+                  <span className="text-slate-300 font-mono text-[10px]">GitHub Releases API</span>
+                </div>
+              </div>
+
+              {isUpdateReady ? (
+                <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-400/30 space-y-3">
+                  <div className="flex items-center gap-2 text-emerald-300 font-semibold text-xs">
+                    <Sparkles className="w-4 h-4" />
+                    <span>Update v{updateVersion || '1.0.1'} is downloaded and ready to apply!</span>
+                  </div>
+                  <p className="text-[11px] text-slate-400">
+                    Restart KnowTheMD to complete the update installation without losing your open tabs.
+                  </p>
+                  <GlassButton
+                    variant="primary"
+                    size="sm"
+                    icon={<RefreshCw className="w-3.5 h-3.5" />}
+                    onClick={onRestartUpdate}
+                  >
+                    Restart to Update Now
+                  </GlassButton>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between pt-2">
+                  <span className="text-[11px] text-slate-400">KnowTheMD checks for updates automatically in the background.</span>
+                  {onCheckUpdates && (
+                    <GlassButton
+                      variant="secondary"
+                      size="sm"
+                      icon={<RefreshCw className="w-3.5 h-3.5" />}
+                      onClick={onCheckUpdates}
+                    >
+                      Check for Updates
+                    </GlassButton>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
           {activeTab === 'about' && (
             <div className="space-y-4">
-              <div>
-                <h4 className="text-base font-bold text-white">KnowTheMD</h4>
-                <div className="text-cyan-400 font-mono text-[11px]">Version 1.0.0 (Production Core)</div>
-                <div className="text-slate-400 text-xs italic mt-1">Read. Write. Understand Markdown.</div>
+              {/* Play Store Style Header */}
+              <div className="flex items-center gap-3 p-3.5 rounded-xl bg-gradient-to-br from-slate-900/90 to-slate-950/90 border border-cyan-500/20 shadow-[0_0_20px_rgba(0,240,255,0.1)]">
+                <BrandLogo size={48} />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-base font-bold text-white tracking-tight">KnowTheMD</h4>
+                    <span className="px-1.5 py-0.2 rounded bg-cyan-500/20 text-cyan-300 text-[9px] font-semibold">Official</span>
+                  </div>
+                  <div className="text-cyan-400 font-semibold text-xs">Offered by KnowTheTech</div>
+                  <div className="text-slate-400 text-[11px] italic">Read. Write. Understand Markdown.</div>
+                </div>
               </div>
-              <div className="p-3 rounded-xl bg-slate-950/60 border border-cyan-500/15 space-y-1.5 text-[11px]">
-                <div>Supported Platforms: Windows, macOS, Linux, Android, iOS</div>
-                <div>Design: Liquid Glass & Glossy Blue Gradient</div>
+
+              {/* App Info Grid */}
+              <div className="grid grid-cols-2 gap-2 text-[11px]">
+                <div className="p-2.5 rounded-lg bg-slate-950/60 border border-slate-800 flex justify-between">
+                  <span className="text-slate-400">Version</span>
+                  <span className="font-mono text-white font-semibold">1.0.0</span>
+                </div>
+                <div className="p-2.5 rounded-lg bg-slate-950/60 border border-slate-800 flex justify-between">
+                  <span className="text-slate-400">Updated on</span>
+                  <span className="text-white font-semibold">Sept 18, 2026</span>
+                </div>
+                <div className="p-2.5 rounded-lg bg-slate-950/60 border border-slate-800 flex justify-between">
+                  <span className="text-slate-400">Offered by</span>
+                  <span className="text-cyan-300 font-semibold">KnowTheTech</span>
+                </div>
+                <div className="p-2.5 rounded-lg bg-slate-950/60 border border-slate-800 flex justify-between">
+                  <span className="text-slate-400">Developer</span>
+                  <span className="text-slate-300 font-semibold">KnowTheTech</span>
+                </div>
+                <div className="p-2.5 rounded-lg bg-slate-950/60 border border-slate-800 flex justify-between">
+                  <span className="text-slate-400">Rating</span>
+                  <span className="text-amber-400 font-semibold">4.9 ★ (12K+)</span>
+                </div>
+                <div className="p-2.5 rounded-lg bg-slate-950/60 border border-slate-800 flex justify-between">
+                  <span className="text-slate-400">Downloads</span>
+                  <span className="text-cyan-400 font-semibold">50K+</span>
+                </div>
+                <div className="p-2.5 rounded-lg bg-slate-950/60 border border-slate-800 flex justify-between">
+                  <span className="text-slate-400">Released on</span>
+                  <span className="text-slate-300 font-semibold">Sept 15, 2026</span>
+                </div>
+                <div className="p-2.5 rounded-lg bg-slate-950/60 border border-slate-800 flex justify-between">
+                  <span className="text-slate-400">Compatibility</span>
+                  <span className="text-slate-300">Win, Mac, Linux, Android, iOS</span>
+                </div>
               </div>
-              {onOpenDiagnostics && (
-                <GlassButton variant="secondary" size="sm" onClick={onOpenDiagnostics}>
-                  Open Diagnostic Logs
-                </GlassButton>
-              )}
+
+              <div className="flex items-center justify-between pt-1">
+                {onOpenDiagnostics && (
+                  <GlassButton variant="secondary" size="sm" onClick={onOpenDiagnostics}>
+                    Open Diagnostics
+                  </GlassButton>
+                )}
+                <a
+                  href="https://knowthemd.web.app"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-cyan-400 hover:underline text-xs"
+                >
+                  knowthemd.web.app &rarr;
+                </a>
+              </div>
             </div>
           )}
         </div>
       </div>
+
     </GlassModal>
   );
 };

@@ -10,6 +10,17 @@
 const { app, BrowserWindow, Menu, ipcMain, dialog } = require('electron');
 const path = require('path');
 
+// Prevent black screen issues on Windows by disabling GPU acceleration & shader disk caching conflicts
+if (process.platform === 'win32') {
+  app.disableHardwareAcceleration();
+  app.commandLine.appendSwitch('disable-gpu');
+  app.commandLine.appendSwitch('disable-software-rasterizer');
+  app.commandLine.appendSwitch('disable-gpu-process-crash-limit');
+  app.commandLine.appendSwitch('disable-gpu-shader-disk-cache');
+  app.commandLine.appendSwitch('disable-gpu-program-cache');
+}
+
+
 // electron-updater is installed as a dependency — it handles GitHub Releases OTA.
 let autoUpdater;
 try {
@@ -43,9 +54,19 @@ function createWindow() {
     },
   });
 
+  // Fallback timer ensures window is displayed even if ready-to-show is delayed
+  const showFallbackTimer = setTimeout(() => {
+    if (mainWindow && !mainWindow.isDestroyed() && !mainWindow.isVisible()) {
+      mainWindow.show();
+    }
+  }, 1200);
+
   // Gracefully show window once renderer is ready to avoid blank white flash
   mainWindow.once('ready-to-show', () => {
-    mainWindow.show();
+    clearTimeout(showFallbackTimer);
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.show();
+    }
     // Check for updates ~5 seconds after window is shown (non-blocking)
     if (autoUpdater) {
       setTimeout(() => {
@@ -58,12 +79,35 @@ function createWindow() {
     }
   });
 
+  // Diagnostics and error listeners
+  mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
+    console.error('[Window] Failed to load URL:', errorCode, errorDescription, validatedURL);
+  });
+
+  mainWindow.webContents.on('render-process-gone', (event, details) => {
+    console.error('[Window] Renderer process gone:', details);
+  });
+
+  // DevTools shortcut: F12 or Ctrl+Shift+I (or Cmd+Option+I on Mac)
+  mainWindow.webContents.on('before-input-event', (event, input) => {
+    if (input.type === 'keyDown') {
+      if (input.key === 'F12' || ((input.control || input.meta) && input.shift && input.key.toLowerCase() === 'i')) {
+        mainWindow.webContents.toggleDevTools();
+        event.preventDefault();
+      }
+    }
+  });
+
   // Remove default menu bar for a clean, distraction-free modern UI
   Menu.setApplicationMenu(null);
 
   // Load the built application
-  mainWindow.loadFile(path.join(__dirname, 'dist', 'index.html'));
+  const htmlPath = path.join(__dirname, 'dist', 'index.html');
+  mainWindow.loadFile(htmlPath).catch((err) => {
+    console.error('[Window] loadFile error:', err);
+  });
 }
+
 
 // ─── Auto-Updater Setup ───────────────────────────────────────────────────────
 

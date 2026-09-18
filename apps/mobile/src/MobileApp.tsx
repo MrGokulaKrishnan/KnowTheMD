@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { BrandLogo, GlassCard, GlassButton } from '@knowthemd/ui';
+import { BrandLogo, GlassCard, GlassButton, AboutAppModal } from '@knowthemd/ui';
 import { computeStats } from '@knowthemd/markdown-engine';
 import { Editor, Preview, ReadingMode } from '@knowthemd/editor';
 import { MobileBottomNav, MobileTab } from './components/MobileBottomNav';
@@ -19,7 +19,10 @@ import {
   Download,
   X,
   ArrowUpCircle,
+  RefreshCw,
+  Info,
 } from 'lucide-react';
+
 
 
 interface MobileDoc {
@@ -68,7 +71,9 @@ export const MobileApp: React.FC = () => {
   const [activeDocId, setActiveDocId] = useState<string>('doc_1');
   const [fontSize, setFontSize] = useState<number>(15);
   const [mobileToast, setMobileToast] = useState<string | null>(null);
+  const [isAboutOpen, setIsAboutOpen] = useState(false);
   const theme = 'dark';
+
 
   // ── In-app update checker (polls GitHub Releases API, throttled 24h) ──
   const updateChecker = useUpdateChecker();
@@ -460,9 +465,73 @@ export const MobileApp: React.FC = () => {
                 </span>
               </div>
 
-              <div className="p-4 rounded-xl bg-slate-900/60 border border-cyan-500/15 space-y-1">
-                <div className="font-semibold text-white">KnowTheMD Mobile v1.0.0</div>
-                <div className="text-slate-400 text-[11px]">Android & iOS Ready • Local-First</div>
+              {/* OTA Updates Section */}
+              <div className="p-4 rounded-xl bg-slate-900/60 border border-cyan-500/20 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold text-white">Over-The-Air Updates</span>
+                  <span className="text-[10px] text-emerald-400 font-semibold bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-400/20">
+                    Active
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-[11px] text-slate-400">
+                  <span>Current Version</span>
+                  <span className="font-mono text-cyan-300">v1.0.0</span>
+                </div>
+
+                {updateChecker.state === 'available' ? (
+                  <div className="p-3 rounded-lg bg-cyan-500/15 border border-cyan-400/30 space-y-2">
+                    <p className="text-xs font-semibold text-cyan-200">
+                      New version v{updateChecker.latestVersion} is available!
+                    </p>
+                    <a
+                      href={updateChecker.downloadUrl ?? updateChecker.releaseUrl ?? '#'}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-500/30 border border-cyan-400/40 text-cyan-200 text-xs font-semibold cursor-pointer"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      Download &amp; Install APK
+                    </a>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between pt-1">
+                    <span className="text-[10px] text-slate-500">
+                      {updateChecker.state === 'checking'
+                        ? 'Checking for updates...'
+                        : updateChecker.state === 'up-to-date'
+                        ? 'You have the latest version'
+                        : 'Automatic check every 24h'}
+                    </span>
+                    <button
+                      onClick={updateChecker.check}
+                      disabled={updateChecker.state === 'checking'}
+                      className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-slate-800/80 border border-cyan-500/20 text-cyan-300 text-xs hover:bg-slate-800 active:scale-95 transition-all cursor-pointer disabled:opacity-50"
+                    >
+                      <RefreshCw className={`w-3 h-3 ${updateChecker.state === 'checking' ? 'animate-spin' : ''}`} />
+                      Check Now
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Play Store Style About Card */}
+              <div className="p-4 rounded-xl bg-gradient-to-br from-slate-900/90 to-slate-950/90 border border-cyan-500/20 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="font-semibold text-white flex items-center gap-1.5">
+                    <Info className="w-4 h-4 text-cyan-400" />
+                    <span>About This App</span>
+                  </div>
+                  <span className="text-[10px] text-cyan-300">KnowTheTech</span>
+                </div>
+                <p className="text-[11px] text-slate-400">
+                  Offered by KnowTheTech • Updated on Sept 18, 2026 • Rating 4.9 ★
+                </p>
+                <button
+                  onClick={() => setIsAboutOpen(true)}
+                  className="w-full mt-2 py-2 rounded-xl bg-cyan-500/15 border border-cyan-400/30 text-cyan-300 text-xs font-semibold hover:bg-cyan-500/25 active:scale-98 transition-all cursor-pointer"
+                >
+                  View App Info (Play Store Style) &rarr;
+                </button>
               </div>
             </div>
           </div>
@@ -472,7 +541,14 @@ export const MobileApp: React.FC = () => {
       {/* 3. Bottom Touch Navigation Bar */}
       <MobileBottomNav activeTab={activeTab} onSelectTab={setActiveTab} />
 
-      {/* 4. Floating Feedback Toast */}
+      {/* 4. Play Store Style About Modal */}
+      <AboutAppModal
+        isOpen={isAboutOpen}
+        onClose={() => setIsAboutOpen(false)}
+        onCheckUpdates={updateChecker.check}
+      />
+
+      {/* 5. Floating Feedback Toast */}
       {mobileToast && (
         <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-slate-900/95 border border-cyan-500/40 rounded-full shadow-[0_8px_25px_rgba(0,0,0,0.6),0_0_15px_rgba(0,240,255,0.2)] text-xs text-white flex items-center gap-2 animate-fade-in pointer-events-none">
           <Check className="w-3.5 h-3.5 text-emerald-400" />
@@ -482,3 +558,4 @@ export const MobileApp: React.FC = () => {
     </div>
   );
 };
+

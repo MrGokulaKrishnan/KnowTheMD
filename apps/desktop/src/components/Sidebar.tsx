@@ -12,7 +12,9 @@ import {
   ChevronRight,
   ChevronDown,
   Trash2,
+  Info,
 } from 'lucide-react';
+
 
 export interface SidebarProps {
   isOpen: boolean;
@@ -28,9 +30,11 @@ export interface SidebarProps {
   onOpenRecent: (item: RecentItem) => void;
   onOpenSettings: () => void;
   onOpenDiagnostics: () => void;
+  onOpenAbout?: () => void;
   onGoHome?: () => void;
   lightMode?: boolean;
 }
+
 
 export const Sidebar: React.FC<SidebarProps> = ({
   isOpen,
@@ -45,8 +49,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onOpenRecent,
   onOpenSettings,
   onOpenDiagnostics,
+  onOpenAbout,
   onGoHome,
 }) => {
+
   const [showRecents, setShowRecents] = useState(true);
   const [showWorkspace, setShowWorkspace] = useState(true);
 
@@ -153,21 +159,33 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <div className="p-3 border-t border-cyan-500/15 flex items-center justify-between text-slate-400 bg-slate-950/90">
         <button
           onClick={onOpenSettings}
-          className="flex items-center gap-2 text-xs hover:text-cyan-300 transition-colors p-1.5 rounded-lg hover:bg-cyan-500/10"
+          className="flex items-center gap-2 text-xs hover:text-cyan-300 transition-colors p-1.5 rounded-lg hover:bg-cyan-500/10 cursor-pointer"
           title="Settings"
         >
           <Settings className="w-4 h-4" />
           <span>Settings</span>
         </button>
 
-        <button
-          onClick={onOpenDiagnostics}
-          className="p-1.5 rounded-lg hover:text-cyan-300 hover:bg-cyan-500/10 transition-colors"
-          title="Diagnostic Logs"
-        >
-          <Activity className="w-4 h-4" />
-        </button>
+        <div className="flex items-center gap-1">
+          {onOpenAbout && (
+            <button
+              onClick={onOpenAbout}
+              className="p-1.5 rounded-lg hover:text-cyan-300 hover:bg-cyan-500/10 transition-colors cursor-pointer"
+              title="About This App (KnowTheTech)"
+            >
+              <Info className="w-4 h-4" />
+            </button>
+          )}
+          <button
+            onClick={onOpenDiagnostics}
+            className="p-1.5 rounded-lg hover:text-cyan-300 hover:bg-cyan-500/10 transition-colors cursor-pointer"
+            title="Diagnostic Logs"
+          >
+            <Activity className="w-4 h-4" />
+          </button>
+        </div>
       </div>
+
     </aside>
   );
 };

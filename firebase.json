@@ -5,9 +5,32 @@
       "firebase.json",
       "**/.*",
       "**/node_modules/**",
-      "**/*.apk",
-      "**/*.exe"
+      "**/downloads/**"
     ],
+
+    "redirects": [
+      {
+        "source": "/downloads/KnowTheMD_Windows_x64_Setup.exe",
+        "destination": "https://github.com/MrGokulaKrishnan/KnowTheMD/releases/download/v1.0.0/KnowTheMD_Windows_x64_Setup.exe",
+        "type": 302
+      },
+      {
+        "source": "/downloads/KnowTheMD_Windows_x64.zip",
+        "destination": "https://github.com/MrGokulaKrishnan/KnowTheMD/releases/download/v1.0.0/KnowTheMD_Windows_x64.zip",
+        "type": 302
+      },
+      {
+        "source": "/downloads/KnowTheMD-1.0.0-android.apk",
+        "destination": "https://github.com/MrGokulaKrishnan/KnowTheMD/releases/download/v1.0.0/KnowTheMD-1.0.0-android.apk",
+        "type": 302
+      },
+      {
+        "source": "/downloads/KnowTheMD-1.0.0-linux-x64.tar.gz",
+        "destination": "https://github.com/MrGokulaKrishnan/KnowTheMD/releases/download/v1.0.0/KnowTheMD-1.0.0-linux-x64.tar.gz",
+        "type": 302
+      }
+    ],
+
     "headers": [
       {
         "source": "/downloads/**/*.apk",

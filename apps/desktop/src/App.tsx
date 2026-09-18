@@ -5,10 +5,12 @@ import {
   GlassCommandPalette,
   GlassToast,
   GlassDialog,
+  AboutAppModal,
   ToastMessage,
   CommandItem,
   TabItem,
 } from '@knowthemd/ui';
+
 import {
   computeStats,
   exportToHtml,
@@ -100,7 +102,9 @@ export const App: React.FC = () => {
   const [isPaletteOpen, setIsPaletteOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isDiagnosticsOpen, setIsDiagnosticsOpen] = useState(false);
+  const [isAboutOpen, setIsAboutOpen] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
+
 
   // Close Confirmation Dialog
   const [pendingCloseId, setPendingCloseId] = useState<string | null>(null);
@@ -435,7 +439,9 @@ export const App: React.FC = () => {
     { id: 'export_html', title: 'Export Standalone HTML', category: 'Export', perform: () => handleExport('html') },
     { id: 'settings', title: 'Open Preferences', category: 'General', perform: () => setIsSettingsOpen(true) },
     { id: 'diagnostics', title: 'View Diagnostic Logs', category: 'Diagnostics', perform: () => setIsDiagnosticsOpen(true) },
+    { id: 'about', title: 'About KnowTheMD (Play Store Info)', category: 'General', perform: () => setIsAboutOpen(true) },
     { id: 'check_updates', title: 'Check for Updates', category: 'General', perform: updater.checkForUpdates },
+
     ...(updater.state === 'ready' ? [{ id: 'install_update', title: `Install Update v${updater.updateInfo?.version ?? ''}`, category: 'General', perform: updater.installUpdate }] : []),
   ];
 
@@ -465,8 +471,10 @@ export const App: React.FC = () => {
         }}
         onOpenSettings={() => setIsSettingsOpen(true)}
         onOpenDiagnostics={() => setIsDiagnosticsOpen(true)}
+        onOpenAbout={() => setIsAboutOpen(true)}
         onGoHome={handleGoHome}
       />
+
 
       {/* 2. Main Workspace */}
       <div className="flex-1 flex flex-col h-full overflow-hidden">
@@ -592,6 +600,17 @@ export const App: React.FC = () => {
           setIsSettingsOpen(false);
           setIsDiagnosticsOpen(true);
         }}
+        onCheckUpdates={updater.checkForUpdates}
+        onRestartUpdate={updater.installUpdate}
+        isUpdateReady={updater.state === 'ready'}
+        updateVersion={updater.updateInfo?.version}
+      />
+
+      {/* Play Store Style About Modal */}
+      <AboutAppModal
+        isOpen={isAboutOpen}
+        onClose={() => setIsAboutOpen(false)}
+        onCheckUpdates={updater.checkForUpdates}
       />
 
       {/* Diagnostics Modal */}
@@ -599,6 +618,7 @@ export const App: React.FC = () => {
         isOpen={isDiagnosticsOpen}
         onClose={() => setIsDiagnosticsOpen(false)}
       />
+
 
       {/* Unsaved Changes Confirmation Dialog */}
       <GlassDialog

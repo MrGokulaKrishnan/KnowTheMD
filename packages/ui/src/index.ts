@@ -13,3 +13,5 @@ export * from './components/GlassCommandPalette';
 export * from './components/GlassTooltip';
 export * from './components/GlassToast';
 export * from './components/GlassDialog';
+export * from './components/AboutAppModal';
+

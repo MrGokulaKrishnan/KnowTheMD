@@ -3,9 +3,10 @@ import { BrandLogo } from '@knowthemd/ui';
 
 export interface FooterProps {
   onNavigate: (page: string) => void;
+  onOpenAbout?: () => void;
 }
 
-export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
+export const Footer: React.FC<FooterProps> = ({ onNavigate, onOpenAbout }) => {
   return (
     <footer className="border-t border-cyan-500/15 bg-slate-950 py-12 px-6 sm:px-12 text-slate-400 text-xs select-none">
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8 mb-10">
@@ -15,10 +16,22 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
           <p className="text-slate-400 leading-relaxed">
             Read. Write. Understand Markdown. Built for speed, precision, and privacy across all platforms.
           </p>
+          <div className="text-[11px] text-cyan-400 font-semibold">
+            Offered by KnowTheTech • Updated on Sept 18, 2026
+          </div>
           <div className="text-[11px] text-slate-500">
             © {new Date().getFullYear()} KnowTheMD Project. All rights reserved.
           </div>
+          {onOpenAbout && (
+            <button
+              onClick={onOpenAbout}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-500/10 border border-cyan-400/25 text-cyan-300 text-[11px] font-semibold hover:bg-cyan-500/20 transition-all cursor-pointer"
+            >
+              View App Info (Play Store Style) &rarr;
+            </button>
+          )}
         </div>
+
 
         {/* Platforms */}
         <div>

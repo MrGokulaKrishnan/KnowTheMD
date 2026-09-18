@@ -8,11 +8,15 @@ import { ChangelogPage } from './pages/ChangelogPage';
 import { LegalPage } from './pages/LegalPage';
 import { SupportPage } from './pages/SupportPage';
 import { NotFoundPage } from './pages/NotFoundPage';
+import { AboutAppModal } from '@knowthemd/ui';
 import { WifiOff } from 'lucide-react';
+
 
 export const App: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<string>('home');
   const [isOffline, setIsOffline] = useState<boolean>(!navigator.onLine);
+  const [isAboutOpen, setIsAboutOpen] = useState(false);
+
 
   // Parse path and hash to determine current page
   const resolveRoute = (): string => {
@@ -91,7 +95,13 @@ export const App: React.FC = () => {
         {currentPage === 'support' && <SupportPage />}
         {currentPage === '404' && <NotFoundPage onNavigate={navigateTo} />}
       </main>
-      <Footer onNavigate={navigateTo} />
+      <Footer onNavigate={navigateTo} onOpenAbout={() => setIsAboutOpen(true)} />
+
+      <AboutAppModal
+        isOpen={isAboutOpen}
+        onClose={() => setIsAboutOpen(false)}
+      />
     </div>
   );
 };
+

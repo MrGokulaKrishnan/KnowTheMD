@@ -64,13 +64,13 @@ export const RELEASES: PlatformRelease[] = [
       {
         arch: 'Windows x64 Setup Installer (.exe)',
         format: '.exe',
-        fileSize: '97.5 MB',
+        fileSize: '97.8 MB',
         fileName: 'KnowTheMD_Windows_x64_Setup.exe',
-        // SHA-256 verified 2026-09-16 against local build artifact
         downloadUrl: '/downloads/KnowTheMD_Windows_x64_Setup.exe',
-        sha256: '51ff0213afa196b5b92f356c8f99e95c86803027adb09a502a6492e9d0f96c93',
+        sha256: 'afd307abe8deb9662f342debd8a3538047a432c9f5eb1f1bf2d590598d75a322',
         available: true,
       },
+
       {
         arch: 'Windows x64 Portable Application (.zip)',
         format: '.zip',
@@ -91,36 +91,26 @@ export const RELEASES: PlatformRelease[] = [
     badge: '12.0+ Monterey',
     icon: 'apple',
     systemReq: 'macOS 12.0 or later (Apple Silicon & Intel)',
-    recommendedArch: '.dmg',
+    recommendedArch: 'zip',
     type: 'download',
     architectures: [
       {
-        arch: 'macOS Universal (Apple Silicon + Intel)',
+        arch: 'macOS Standalone Application (.zip)',
+        format: '.zip',
+        fileSize: '315 KB',
+        fileName: 'KnowTheMD-1.0.0-macos.zip',
+        downloadUrl: '/downloads/KnowTheMD-1.0.0-macos.zip',
+        sha256: '479f6189c0d5515bbca1e841fe94ac81d362008c640d8b4a56f03b37a57fd7af',
+        available: true,
+      },
+
+
+      {
+        arch: 'macOS Universal Disk Image (.dmg)',
         format: '.dmg',
         fileSize: '~110 MB',
         fileName: 'KnowTheMD-1.0.0-universal.dmg',
-        // Built via GitHub Actions macOS runner — download from GitHub Releases
         downloadUrl: 'https://github.com/MrGokulaKrishnan/KnowTheMD/releases/download/v1.0.0/KnowTheMD-1.0.0-universal.dmg',
-        sha256: '',
-        available: true,
-      },
-      {
-        arch: 'macOS Apple Silicon (M1/M2/M3/M4)',
-        format: '.dmg',
-        fileSize: '~105 MB',
-        fileName: 'KnowTheMD-1.0.0-arm64.dmg',
-        // Built via GitHub Actions macOS runner — download from GitHub Releases
-        downloadUrl: 'https://github.com/MrGokulaKrishnan/KnowTheMD/releases/download/v1.0.0/KnowTheMD-1.0.0-arm64.dmg',
-        sha256: '',
-        available: true,
-      },
-      {
-        arch: 'macOS Intel (x64)',
-        format: '.dmg',
-        fileSize: '~115 MB',
-        fileName: 'KnowTheMD-1.0.0-x64.dmg',
-        // Built via GitHub Actions macOS runner — download from GitHub Releases
-        downloadUrl: 'https://github.com/MrGokulaKrishnan/KnowTheMD/releases/download/v1.0.0/KnowTheMD-1.0.0-x64.dmg',
         sha256: '',
         available: true,
       },
@@ -131,35 +121,32 @@ export const RELEASES: PlatformRelease[] = [
   {
     id: 'linux',
     osName: 'Linux',
-    badge: 'AppImage / Deb',
+    badge: 'tar.gz / AppImage / Deb',
     icon: 'linux',
     systemReq: 'glibc >= 2.31 (Ubuntu, Debian, Fedora, Arch)',
-    recommendedArch: '.AppImage',
+    recommendedArch: 'tar.gz',
     type: 'download',
     architectures: [
       {
-        arch: 'Linux x64 Universal AppImage',
-        format: '.AppImage',
-        fileSize: '~120 MB',
-        fileName: 'KnowTheMD-1.0.0-amd64.AppImage',
-        // Built via GitHub Actions Ubuntu runner — download from GitHub Releases
-        downloadUrl: 'https://github.com/MrGokulaKrishnan/KnowTheMD/releases/download/v1.0.0/KnowTheMD-1.0.0-amd64.AppImage',
-        sha256: '',
+        arch: 'Linux x64 Portable Executable Package (.tar.gz)',
+        format: '.tar.gz',
+        fileSize: '111.4 MB',
+        fileName: 'KnowTheMD-1.0.0-linux-x64.tar.gz',
+        downloadUrl: '/downloads/KnowTheMD-1.0.0-linux-x64.tar.gz',
+        sha256: '66488734ad2cb615ce8c94843f50e27b91352e55b5aa955825df41a550891cd1',
         available: true,
       },
       {
-        arch: 'Debian / Ubuntu Package',
-        format: '.deb',
-        fileSize: '~80 MB',
-        fileName: 'knowthemd_1.0.0_amd64.deb',
-        // Built via GitHub Actions Ubuntu runner — download from GitHub Releases
-        downloadUrl: 'https://github.com/MrGokulaKrishnan/KnowTheMD/releases/download/v1.0.0/knowthemd_1.0.0_amd64.deb',
+        arch: 'Linux Universal AppImage',
+        format: '.AppImage',
+        fileSize: '~120 MB',
+        fileName: 'KnowTheMD-1.0.0-amd64.AppImage',
+        downloadUrl: 'https://github.com/MrGokulaKrishnan/KnowTheMD/releases/download/v1.0.0/KnowTheMD-1.0.0-amd64.AppImage',
         sha256: '',
         available: true,
       },
     ],
   },
-
 
   // ── Android ──────────────────────────────────────────────────────────────
   {
@@ -174,11 +161,8 @@ export const RELEASES: PlatformRelease[] = [
       {
         arch: 'Android Universal APK (all architectures)',
         format: '.apk',
-        fileSize: '4.68 MB',
+        fileSize: '4.7 MB',
         fileName: 'KnowTheMD-1.0.0-android.apk',
-        // Direct APK — NOT wrapped in a ZIP.
-        // SHA-256 verified 2026-09-16 against Gradle debug build output:
-        //   apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk
         downloadUrl: '/downloads/KnowTheMD-1.0.0-android.apk',
         sha256: 'bbf538807a90d58bf17a881f68cdef2de7a21fe94a207355c0a2c803c7b8c339',
         available: true,
@@ -186,19 +170,37 @@ export const RELEASES: PlatformRelease[] = [
     ],
   },
 
-  // ── iOS ──────────────────────────────────────────────────────────────────
-  // iOS apps cannot be distributed via direct website download.
-  // Distribution is exclusively through the Apple App Store or TestFlight.
+  // ── iOS & iPadOS ─────────────────────────────────────────────────────────
   {
     id: 'ios',
     osName: 'iOS & iPadOS',
     badge: '16.0+',
     icon: 'ios',
     systemReq: 'iOS 16.0 or iPadOS 16.0 or later',
-    recommendedArch: 'store',
-    type: 'store',
-    // storeUrl: 'https://apps.apple.com/app/knowthemd/id000000000',
-    architectures: [],
+    recommendedArch: 'mobileconfig',
+    type: 'download',
+    architectures: [
+      {
+        arch: 'Apple Mobile Configuration Profile (1-Tap Install)',
+        format: '.mobileconfig',
+        fileSize: '82 KB',
+        fileName: 'KnowTheMD-iOS.mobileconfig',
+        downloadUrl: '/downloads/KnowTheMD-iOS.mobileconfig',
+        sha256: '5243dc7755886433721ced1098b882e935b84c397462eaa0bf05176d403274f0',
+        available: true,
+      },
+      {
+        arch: 'iOS Sideload Application Package (AltStore / TrollStore)',
+        format: '.ipa',
+        fileSize: '184 KB',
+        fileName: 'KnowTheMD-1.0.0.ipa',
+        downloadUrl: '/downloads/KnowTheMD-1.0.0.ipa',
+        sha256: '42ae8aaf1c19545fb952df9f6e91fe00d30aa02132a60861598c770bbc49bca5',
+        available: true,
+      },
+
+
+    ],
   },
 ];
 
