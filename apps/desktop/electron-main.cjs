@@ -2,37 +2,119 @@
  * KnowTheMD — Electron Main Process
  * ───────────────────────────────────
  * Responsibilities:
- *  - Create the BrowserWindow
+ *  - Enforce single-instance lock to prevent zombie processes and file conflicts
+ *  - Handle Windows and macOS native file opening (.md / .markdown / .txt)
+ *  - Create the BrowserWindow with hardware-accelerated, errorless rendering
  *  - Configure auto-updater (electron-updater → GitHub Releases)
- *  - Expose IPC handlers for the renderer (version, install-update)
+ *  - Expose IPC handlers for the renderer (initial-file, version, install-update)
  */
 
-const { app, BrowserWindow, Menu, ipcMain, dialog } = require('electron');
+const { app, BrowserWindow, Menu, ipcMain } = require('electron');
 const path = require('path');
+const fs = require('fs');
 
-// Prevent black screen issues on Windows by disabling GPU acceleration & shader disk caching conflicts
-if (process.platform === 'win32') {
-  app.disableHardwareAcceleration();
-  app.commandLine.appendSwitch('disable-gpu');
-  app.commandLine.appendSwitch('disable-software-rasterizer');
-  app.commandLine.appendSwitch('disable-gpu-process-crash-limit');
-  app.commandLine.appendSwitch('disable-gpu-shader-disk-cache');
-  app.commandLine.appendSwitch('disable-gpu-program-cache');
+// ─── Single-Instance Guard ───────────────────────────────────────────────────
+// Ensures only one instance runs at a time. If user opens a .md file while app
+// is already open, the file is passed to the running instance instead of creating
+// conflicting processes that cause black screens.
+const gotTheLock = app.requestSingleInstanceLock();
+if (!gotTheLock) {
+  app.quit();
+  process.exit(0);
 }
 
+// ─── Platform & Display Optimization ─────────────────────────────────────────
+if (process.platform === 'win32') {
+  app.commandLine.appendSwitch('enable-font-antialiasing');
+  app.commandLine.appendSwitch('high-dpi-support', '1');
+}
 
-// electron-updater is installed as a dependency — it handles GitHub Releases OTA.
+// ─── Native File Association Helpers ─────────────────────────────────────────
+function extractFilePathFromArgs(argv) {
+  if (!argv || !Array.isArray(argv)) return null;
+  for (let i = 1; i < argv.length; i++) {
+    const arg = argv[i];
+    if (!arg || arg.startsWith('--') || arg.startsWith('-') || arg === '.') continue;
+    try {
+      const cleanPath = path.resolve(arg.replace(/^"|"$/g, ''));
+      if (fs.existsSync(cleanPath) && fs.statSync(cleanPath).isFile()) {
+        const ext = path.extname(cleanPath).toLowerCase();
+        if (['.md', '.markdown', '.mdown', '.mkdn', '.mkd', '.txt', ''].includes(ext)) {
+          return cleanPath;
+        }
+      }
+    } catch (e) {
+      // Non-file argument, skip
+    }
+  }
+  return null;
+}
+
+function readMarkdownFile(filePath) {
+  try {
+    const stats = fs.statSync(filePath);
+    if (stats.size > 25 * 1024 * 1024) {
+      console.warn('[Electron] File too large to open directly (>25MB):', filePath);
+      return null;
+    }
+    const content = fs.readFileSync(filePath, 'utf8');
+    return {
+      name: path.basename(filePath),
+      path: filePath,
+      content,
+    };
+  } catch (err) {
+    console.error('[Electron] Error reading file:', filePath, err);
+    return null;
+  }
+}
+
+let pendingFilePayload = null;
+const initialArgFile = extractFilePathFromArgs(process.argv);
+if (initialArgFile) {
+  pendingFilePayload = readMarkdownFile(initialArgFile);
+}
+
+function sendFileToWindow(filePath) {
+  const payload = readMarkdownFile(filePath);
+  if (!payload) return;
+  pendingFilePayload = payload;
+
+  if (mainWindow && !mainWindow.isDestroyed() && mainWindow.webContents) {
+    mainWindow.webContents.send('file-opened', payload);
+  }
+}
+
+// Handle second instance (when user opens a file while app is running)
+app.on('second-instance', (_event, commandLine) => {
+  if (mainWindow) {
+    if (mainWindow.isMinimized()) mainWindow.restore();
+    if (!mainWindow.isVisible()) mainWindow.show();
+    mainWindow.focus();
+
+    const filePath = extractFilePathFromArgs(commandLine);
+    if (filePath) {
+      sendFileToWindow(filePath);
+    }
+  }
+});
+
+// macOS native file open handler
+app.on('open-file', (event, filePath) => {
+  event.preventDefault();
+  sendFileToWindow(filePath);
+});
+
+// ─── Auto-Updater ─────────────────────────────────────────────────────────────
 let autoUpdater;
 try {
   autoUpdater = require('electron-updater').autoUpdater;
 } catch (e) {
-  // Fallback: electron-updater not installed yet (dev environment without it)
   console.warn('[Updater] electron-updater not found — auto-update disabled:', e.message);
   autoUpdater = null;
 }
 
-// ─── Window ───────────────────────────────────────────────────────────────────
-
+// ─── Window Management ────────────────────────────────────────────────────────
 let mainWindow = null;
 
 function createWindow() {
@@ -49,25 +131,18 @@ function createWindow() {
       nodeIntegration: false,
       contextIsolation: true,
       sandbox: true,
-      // Preload bridges the main/renderer processes via a narrow IPC API
       preload: path.join(__dirname, 'preload.cjs'),
     },
   });
 
-  // Fallback timer ensures window is displayed even if ready-to-show is delayed
-  const showFallbackTimer = setTimeout(() => {
-    if (mainWindow && !mainWindow.isDestroyed() && !mainWindow.isVisible()) {
-      mainWindow.show();
-    }
-  }, 1200);
-
-  // Gracefully show window once renderer is ready to avoid blank white flash
+  // Gracefully show window once renderer is ready
   mainWindow.once('ready-to-show', () => {
-    clearTimeout(showFallbackTimer);
     if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.show();
+      if (pendingFilePayload) {
+        mainWindow.webContents.send('file-opened', pendingFilePayload);
+      }
     }
-    // Check for updates ~5 seconds after window is shown (non-blocking)
     if (autoUpdater) {
       setTimeout(() => {
         try {
@@ -79,13 +154,23 @@ function createWindow() {
     }
   });
 
-  // Diagnostics and error listeners
+  // Fallback timer ensures window is displayed even if ready-to-show is delayed
+  setTimeout(() => {
+    if (mainWindow && !mainWindow.isDestroyed() && !mainWindow.isVisible()) {
+      mainWindow.show();
+    }
+  }, 2000);
+
+  // Diagnostics and recovery listeners
   mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
     console.error('[Window] Failed to load URL:', errorCode, errorDescription, validatedURL);
   });
 
   mainWindow.webContents.on('render-process-gone', (event, details) => {
     console.error('[Window] Renderer process gone:', details);
+    if (details.reason !== 'clean-exit' && mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.reload();
+    }
   });
 
   // DevTools shortcut: F12 or Ctrl+Shift+I (or Cmd+Option+I on Mac)
@@ -108,18 +193,12 @@ function createWindow() {
   });
 }
 
-
 // ─── Auto-Updater Setup ───────────────────────────────────────────────────────
-
 function setupAutoUpdater() {
   if (!autoUpdater) return;
 
-  // Disable auto-download — we download manually so we can show progress in the UI
   autoUpdater.autoDownload = false;
-  // Install on next app quit (instead of immediately forcing quit)
   autoUpdater.autoInstallOnAppQuit = true;
-
-  // ── Events ──
 
   autoUpdater.on('update-available', (info) => {
     console.log('[Updater] Update available:', info.version);
@@ -129,7 +208,6 @@ function setupAutoUpdater() {
         releaseDate: info.releaseDate,
         releaseNotes: info.releaseNotes,
       });
-      // Start downloading immediately after notifying the UI
       autoUpdater.downloadUpdate();
     }
   });
@@ -146,14 +224,12 @@ function setupAutoUpdater() {
         total: progress.total,
         bytesPerSecond: progress.bytesPerSecond,
       });
-      // Also update the taskbar progress bar on Windows
       mainWindow.setProgressBar(progress.percent / 100);
     }
   });
 
   autoUpdater.on('update-downloaded', (info) => {
     console.log('[Updater] Update downloaded:', info.version);
-    // Clear taskbar progress
     if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.setProgressBar(-1);
       mainWindow.webContents.send('update-downloaded', {
@@ -173,8 +249,14 @@ function setupAutoUpdater() {
 }
 
 // ─── IPC Handlers ─────────────────────────────────────────────────────────────
-
 function setupIpcHandlers() {
+  // Renderer requests initial file if opened via file association
+  ipcMain.handle('get-initial-file', () => {
+    const file = pendingFilePayload;
+    pendingFilePayload = null;
+    return file;
+  });
+
   // Renderer requests app version
   ipcMain.handle('get-app-version', () => app.getVersion());
 
@@ -198,7 +280,6 @@ function setupIpcHandlers() {
 }
 
 // ─── App Lifecycle ────────────────────────────────────────────────────────────
-
 app.whenReady().then(() => {
   setupIpcHandlers();
   setupAutoUpdater();

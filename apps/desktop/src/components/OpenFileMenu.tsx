@@ -170,6 +170,41 @@ export const OpenFileMenu: React.FC<OpenFileMenuProps> = ({
           </div>
         </div>
 
+        {/* ── Active Document Resume Card (Same as Mobile) ── */}
+        {activeDoc && (
+          <div className="p-4 rounded-2xl bg-gradient-to-r from-cyan-950/40 via-slate-900/80 to-slate-900/60 border border-cyan-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-[0_0_25px_rgba(0,240,255,0.08)]">
+            <div className="flex items-center gap-3.5 min-w-0">
+              <div className="p-2.5 rounded-xl bg-cyan-500/20 text-cyan-300 border border-cyan-400/30 shrink-0">
+                <FileText className="w-5 h-5" />
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] uppercase font-bold tracking-wider text-cyan-400">
+                    Active Workspace Document
+                  </span>
+                  {activeDoc.isDirty && (
+                    <span className="px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[9px] font-semibold">
+                      Unsaved
+                    </span>
+                  )}
+                </div>
+                <h3 className="text-sm font-bold text-white truncate mt-0.5">
+                  {activeDoc.name}
+                </h3>
+              </div>
+            </div>
+            <GlassButton
+              variant="primary"
+              size="sm"
+              icon={<ArrowRight className="w-3.5 h-3.5" />}
+              onClick={onGoToEditor}
+              className="shadow-[0_0_15px_rgba(0,240,255,0.25)] shrink-0 self-end sm:self-auto"
+            >
+              Continue Editing
+            </GlassButton>
+          </div>
+        )}
+
         {/* ── Primary Action Grid ── */}
         <div className="space-y-3">
           <div className="text-xs font-semibold uppercase tracking-wider text-cyan-400 flex items-center gap-1.5">

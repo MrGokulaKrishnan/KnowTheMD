@@ -37,6 +37,7 @@ import {
   DocumentItem,
   RecentItem,
   getRecentFiles,
+  addRecentFile,
   openMarkdownFile,
   saveMarkdownFile,
   saveAsMarkdownFile,
@@ -45,6 +46,18 @@ import {
   logDiagnostic,
 } from './fileSystem';
 
+declare global {
+  interface Window {
+    electronFileOpener?: {
+      getInitialFile: () => Promise<{ name: string; path?: string; content: string } | null>;
+      onFileOpened: (callback: (file: { name: string; path?: string; content: string }) => void) => () => void;
+    };
+    electronUpdater?: any;
+    electronApp?: {
+      getVersion: () => Promise<string>;
+    };
+  }
+}
 
 const DEFAULT_DOC_CONTENT = `# Welcome to KnowTheMD
 
@@ -148,7 +161,33 @@ export const App: React.FC = () => {
   const activeDoc = docs.find((d) => d.id === activeDocId) || docs[0];
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
-  // On initial mount: restore session and check onboarding
+  const handleLoadExternalFile = useCallback((name: string, content: string, filePath?: string) => {
+    setDocs((prev) => {
+      const existing = prev.find((d) => (filePath && d.path === filePath) || d.name === name);
+      if (existing) {
+        setActiveDocId(existing.id);
+        setIsFileMenuOpen(false);
+        addToast('info', `Switched to ${name}`);
+        return prev;
+      }
+      const newId = `doc_${Date.now()}`;
+      const newDoc: DocumentItem = {
+        id: newId,
+        name,
+        path: filePath,
+        content,
+        isDirty: false,
+      };
+      setActiveDocId(newId);
+      setIsFileMenuOpen(false);
+      addToast('success', `Opened ${name}`);
+      return [newDoc, ...prev];
+    });
+    addRecentFile(name, filePath);
+    setRecentFiles(getRecentFiles());
+  }, []);
+
+  // On initial mount: restore session, check onboarding, and listen for native file opens
   useEffect(() => {
     setRecentFiles(getRecentFiles());
     const restored = loadSessionTabs();
@@ -162,7 +201,29 @@ export const App: React.FC = () => {
     if (!hasSeenOnboarding) {
       setShowOnboarding(true);
     }
-  }, []);
+
+    // Windows Native File Association: Check if opened with a .md file or received via second-instance
+    if (typeof window !== 'undefined' && window.electronFileOpener) {
+      window.electronFileOpener
+        .getInitialFile()
+        .then((file) => {
+          if (file && file.content) {
+            handleLoadExternalFile(file.name, file.content, file.path);
+          }
+        })
+        .catch((e) => console.warn('[App] getInitialFile error:', e));
+
+      const unsubscribe = window.electronFileOpener.onFileOpened((file) => {
+        if (file && file.content) {
+          handleLoadExternalFile(file.name, file.content, file.path);
+        }
+      });
+
+      return () => {
+        if (unsubscribe) unsubscribe();
+      };
+    }
+  }, [handleLoadExternalFile]);
 
   // Save session when docs change
   useEffect(() => {

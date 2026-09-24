@@ -67,7 +67,7 @@ export const RELEASES: PlatformRelease[] = [
         fileSize: '97.8 MB',
         fileName: 'KnowTheMD_Windows_x64_Setup.exe',
         downloadUrl: '/downloads/KnowTheMD_Windows_x64_Setup.exe',
-        sha256: 'afd307abe8deb9662f342debd8a3538047a432c9f5eb1f1bf2d590598d75a322',
+        sha256: '5f13a0e942620c8ff800a0e7783099ec8b3743db931b2adde45e310fa86622da',
         available: true,
       },
       {
@@ -76,7 +76,7 @@ export const RELEASES: PlatformRelease[] = [
         fileSize: '97.8 MB',
         fileName: 'KnowTheMD_Windows_ARM64_Setup.exe',
         downloadUrl: '/downloads/KnowTheMD_Windows_ARM64_Setup.exe',
-        sha256: 'afd307abe8deb9662f342debd8a3538047a432c9f5eb1f1bf2d590598d75a322',
+        sha256: '5f13a0e942620c8ff800a0e7783099ec8b3743db931b2adde45e310fa86622da',
         available: true,
       },
     ],

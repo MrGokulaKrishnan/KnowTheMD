@@ -12,6 +12,20 @@
 
 const { contextBridge, ipcRenderer } = require('electron');
 
+// ─── Native File Opener API ───────────────────────────────────────────────────
+
+contextBridge.exposeInMainWorld('electronFileOpener', {
+  /** Get initial file if app was launched via double-clicking a .md file */
+  getInitialFile: () => ipcRenderer.invoke('get-initial-file'),
+
+  /** Subscribe to file opened events (e.g. user opens file while app is running) */
+  onFileOpened: (cb) => {
+    const handler = (_event, fileData) => cb(fileData);
+    ipcRenderer.on('file-opened', handler);
+    return () => ipcRenderer.removeListener('file-opened', handler);
+  },
+});
+
 // ─── Auto-Updater API ─────────────────────────────────────────────────────────
 
 contextBridge.exposeInMainWorld('electronUpdater', {
