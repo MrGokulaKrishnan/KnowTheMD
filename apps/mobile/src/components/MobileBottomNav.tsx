@@ -10,8 +10,7 @@ export interface MobileBottomNavProps {
 
 export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ activeTab, onSelectTab }) => {
   const items: { id: MobileTab; label: string; icon: React.ReactNode }[] = [
-    { id: 'home', label: 'Home', icon: <Home className="w-5 h-5" /> },
-    { id: 'files', label: 'Files', icon: <Folder className="w-5 h-5" /> },
+    { id: 'home', label: 'Open File', icon: <Folder className="w-5 h-5" /> },
     { id: 'editor', label: 'Editor', icon: <Edit3 className="w-5 h-5" /> },
     { id: 'recent', label: 'Recent', icon: <Clock className="w-5 h-5" /> },
     { id: 'settings', label: 'Settings', icon: <Settings className="w-5 h-5" /> },

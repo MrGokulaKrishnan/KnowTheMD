@@ -1,9 +1,10 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { BrandLogo, GlassCard, GlassButton, AboutAppModal } from '@knowthemd/ui';
 import { computeStats } from '@knowthemd/markdown-engine';
 import { Editor, Preview, ReadingMode } from '@knowthemd/editor';
 import { MobileBottomNav, MobileTab } from './components/MobileBottomNav';
 import { MobileKeyboardToolbar } from './components/MobileKeyboardToolbar';
+import { MobileOpenFileMenu, MobileOpenFileMenuDoc } from './components/MobileOpenFileMenu';
 import { useUpdateChecker } from './hooks/useUpdateChecker';
 import {
   Share2,
@@ -21,9 +22,18 @@ import {
   ArrowUpCircle,
   RefreshCw,
   Info,
+  ChevronLeft,
 } from 'lucide-react';
 
-
+declare global {
+  interface Window {
+    AndroidFileOpener?: {
+      getPendingFile: () => string;
+      clearPendingFile: () => void;
+    };
+    onAndroidFileOpened?: (payloadStr: string) => void;
+  }
+}
 
 interface MobileDoc {
   id: string;
@@ -31,6 +41,9 @@ interface MobileDoc {
   content: string;
   updatedAt: number;
 }
+
+const STORAGE_KEY_DOCS = 'knowthemd_mobile_docs_v1';
+const STORAGE_KEY_ACTIVE = 'knowthemd_mobile_active_id_v1';
 
 const SAMPLE_MOBILE_MD = `# KnowTheMD Mobile
 
@@ -58,30 +71,147 @@ console.log("Touch optimized!");
 `;
 
 export const MobileApp: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<MobileTab>('editor');
+  // Always default to 'home' (Open File Menu / Page) as requested
+  const [activeTab, setActiveTab] = useState<MobileTab>('home');
   const [editorSubMode, setEditorSubMode] = useState<'edit' | 'preview' | 'reading'>('edit');
-  const [docs, setDocs] = useState<MobileDoc[]>([
-    {
-      id: 'doc_1',
-      name: 'Welcome.md',
-      content: SAMPLE_MOBILE_MD,
-      updatedAt: Date.now(),
-    },
-  ]);
-  const [activeDocId, setActiveDocId] = useState<string>('doc_1');
+
+  const [docs, setDocs] = useState<MobileDoc[]>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY_DOCS);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
+    return [
+      {
+        id: 'doc_welcome',
+        name: 'Welcome.md',
+        content: SAMPLE_MOBILE_MD,
+        updatedAt: Date.now(),
+      },
+    ];
+  });
+
+  const [activeDocId, setActiveDocId] = useState<string>(() => {
+    try {
+      const savedId = localStorage.getItem(STORAGE_KEY_ACTIVE);
+      if (savedId) return savedId;
+    } catch (e) {}
+    return 'doc_welcome';
+  });
+
   const [fontSize, setFontSize] = useState<number>(15);
   const [mobileToast, setMobileToast] = useState<string | null>(null);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
   const theme = 'dark';
 
-
   // ── In-app update checker (polls GitHub Releases API, throttled 24h) ──
   const updateChecker = useUpdateChecker();
 
-  const activeDoc = docs.find((d) => d.id === activeDocId) || docs[0];
-  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const activeDoc = docs.find((d) => d.id === activeDocId) || docs[0] || {
+    id: 'doc_fallback',
+    name: 'Untitled.md',
+    content: '',
+    updatedAt: Date.now(),
+  };
 
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const stats = React.useMemo(() => computeStats(activeDoc.content), [activeDoc.content]);
+
+  // Persist docs and activeDocId to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY_DOCS, JSON.stringify(docs));
+    } catch (e) {}
+  }, [docs]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY_ACTIVE, activeDocId);
+    } catch (e) {}
+  }, [activeDocId]);
+
+  // Show a mobile feedback toast
+  const showToast = (message: string) => {
+    setMobileToast(message);
+    setTimeout(() => setMobileToast(null), 2800);
+  };
+
+  // Open a document directly into the editor
+  const openDocumentDirectly = useCallback((fileName: string, content: string) => {
+    const existing = docs.find((d) => d.name === fileName);
+    if (existing) {
+      // Update existing content
+      setDocs((prev) =>
+        prev.map((d) => (d.id === existing.id ? { ...d, content, updatedAt: Date.now() } : d))
+      );
+      setActiveDocId(existing.id);
+    } else {
+      const newId = `doc_${Date.now()}`;
+      const newDoc: MobileDoc = {
+        id: newId,
+        name: fileName,
+        content,
+        updatedAt: Date.now(),
+      };
+      setDocs((prev) => [newDoc, ...prev]);
+      setActiveDocId(newId);
+    }
+    setActiveTab('editor');
+    setEditorSubMode('preview');
+    showToast(`Opened ${fileName}`);
+  }, [docs]);
+
+  // Check for file passed from Android Intent ("Open with KnowTheMD")
+  const checkAndroidPendingFile = useCallback(() => {
+    try {
+      if (typeof window !== 'undefined' && window.AndroidFileOpener) {
+        const raw = window.AndroidFileOpener.getPendingFile();
+        if (raw) {
+          const payload = JSON.parse(raw);
+          if (payload && payload.hasFile && payload.content) {
+            const fileName = payload.name || 'Opened_Document.md';
+            openDocumentDirectly(fileName, payload.content);
+            window.AndroidFileOpener.clearPendingFile();
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Error reading Android pending file:', e);
+    }
+  }, [openDocumentDirectly]);
+
+  useEffect(() => {
+    // 1. Check immediately on mount
+    checkAndroidPendingFile();
+
+    // 2. Poll after short intervals in case the native bridge connects slightly after JS loads
+    const t1 = setTimeout(checkAndroidPendingFile, 200);
+    const t2 = setTimeout(checkAndroidPendingFile, 600);
+
+    // 3. Register global listener for live file intent while app is in background
+    window.onAndroidFileOpened = (payloadStr: string) => {
+      try {
+        const payload = typeof payloadStr === 'string' ? JSON.parse(payloadStr) : payloadStr;
+        if (payload && payload.hasFile && payload.content) {
+          const fileName = payload.name || 'Opened_Document.md';
+          openDocumentDirectly(fileName, payload.content);
+          if (window.AndroidFileOpener) {
+            window.AndroidFileOpener.clearPendingFile();
+          }
+        }
+      } catch (e) {
+        console.error('Error handling live Android file intent:', e);
+      }
+    };
+
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      delete window.onAndroidFileOpened;
+    };
+  }, [checkAndroidPendingFile, openDocumentDirectly]);
 
   // Update content
   const handleContentChange = (newContent: string) => {
@@ -92,41 +222,49 @@ export const MobileApp: React.FC = () => {
     );
   };
 
-  // Create new mobile doc
-  const handleNewDoc = () => {
+  // Create new mobile doc (blank or from template)
+  const handleNewDoc = (initialContent?: string, name?: string) => {
     const id = `doc_${Date.now()}`;
     const newDoc: MobileDoc = {
       id,
-      name: `Note ${docs.length + 1}.md`,
-      content: '# Untitled Note\n\n',
+      name: name || `Note ${docs.length + 1}.md`,
+      content: initialContent || '# Untitled Note\n\n',
       updatedAt: Date.now(),
     };
     setDocs((prev) => [newDoc, ...prev]);
     setActiveDocId(id);
     setActiveTab('editor');
     setEditorSubMode('edit');
+    showToast(name ? `Created from ${name}` : 'New document created');
+  };
+
+  // Delete a document from recents
+  const handleDeleteDoc = (id: string) => {
+    setDocs((prev) => {
+      const remaining = prev.filter((d) => d.id !== id);
+      if (activeDocId === id && remaining.length > 0) {
+        setActiveDocId(remaining[0].id);
+      }
+      return remaining;
+    });
+    showToast('Removed from recents');
   };
 
   // Open file via mobile file picker
   const handleOpenFile = () => {
     const input = document.createElement('input');
     input.type = 'file';
-    input.accept = '.md,.markdown,.txt';
+    input.accept = '.md,.markdown,.mdown,.mkd,.txt';
     input.onchange = async () => {
       if (input.files && input.files[0]) {
         const file = input.files[0];
-        const content = await file.text();
-        const id = `doc_${Date.now()}`;
-        const newDoc: MobileDoc = {
-          id,
-          name: file.name,
-          content,
-          updatedAt: Date.now(),
-        };
-        setDocs((prev) => [newDoc, ...prev]);
-        setActiveDocId(id);
-        setActiveTab('editor');
-        setEditorSubMode('preview');
+        try {
+          const content = await file.text();
+          openDocumentDirectly(file.name, content);
+        } catch (err) {
+          console.error('Error reading file:', err);
+          showToast('Failed to read file');
+        }
       }
     };
     input.click();
@@ -145,8 +283,7 @@ export const MobileApp: React.FC = () => {
       }
     } else {
       navigator.clipboard.writeText(activeDoc.content);
-      setMobileToast('Document copied to clipboard!');
-      setTimeout(() => setMobileToast(null), 2500);
+      showToast('Document copied to clipboard!');
     }
   };
 
@@ -199,7 +336,6 @@ export const MobileApp: React.FC = () => {
 
   return (
     <div className="flex flex-col h-screen w-screen bg-[#030712] text-slate-100 overflow-hidden select-none">
-
       {/* ── Update Banner (shows when a new APK version is on GitHub Releases) ── */}
       {updateChecker.state === 'available' && (
         <div className="w-full bg-slate-900/95 border-b border-cyan-500/25 px-4 py-2.5 flex items-center gap-3 z-50 shrink-0">
@@ -229,53 +365,65 @@ export const MobileApp: React.FC = () => {
         </div>
       )}
 
-      {/* 1. Mobile Header */}
-      <header className="h-14 safe-top bg-slate-950/90 backdrop-blur-xl border-b border-cyan-500/20 px-4 flex items-center justify-between shrink-0 z-30">
-        <button
-          onClick={() => setActiveTab('home')}
-          className="flex items-center gap-2 cursor-pointer hover:opacity-80 active:scale-95 transition-all text-left"
-          title="KnowTheMD Homepage (Open File / Home)"
-        >
-          <BrandLogo size={24} />
-          <span className="text-sm font-semibold text-white truncate max-w-[130px]">
-            {activeDoc.name}
-          </span>
-        </button>
+      {/* ── 1. Top Header Bar ── */}
+      <header className="h-14 safe-top bg-slate-950/95 backdrop-blur-xl border-b border-cyan-500/20 px-3 sm:px-4 flex items-center justify-between shrink-0 z-30 transition-all">
+        {activeTab === 'editor' ? (
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            <button
+              onClick={() => setActiveTab('home')}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 border border-cyan-500/30 text-cyan-300 hover:bg-cyan-500/15 active:scale-95 transition-all text-xs font-semibold cursor-pointer shadow-[0_0_12px_rgba(0,240,255,0.15)] shrink-0"
+              title="Return to Open File Menu"
+            >
+              <FolderOpen className="w-3.5 h-3.5" />
+              <span>Files</span>
+            </button>
+            <span className="text-xs sm:text-sm font-semibold text-white truncate max-w-[140px] sm:max-w-xs">
+              {activeDoc.name}
+            </span>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <BrandLogo size={28} />
+            <span className="text-sm font-bold text-white tracking-tight">
+              KnowThe<span className="text-cyan-400">MD</span>
+            </span>
+          </div>
+        )}
 
         {activeTab === 'editor' && (
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 shrink-0">
             {/* Mode switch */}
-            <div className="flex items-center bg-slate-900 border border-cyan-500/20 rounded-lg p-0.5 text-xs">
+            <div className="flex items-center bg-slate-900 border border-cyan-500/20 rounded-xl p-0.5 text-xs">
               <button
                 onClick={() => setEditorSubMode('edit')}
-                className={`p-1.5 rounded ${
+                className={`p-1.5 rounded-lg transition-all ${
                   editorSubMode === 'edit'
-                    ? 'bg-cyan-500/20 text-cyan-300'
-                    : 'text-slate-400'
+                    ? 'bg-cyan-500/20 text-cyan-300 shadow-[0_0_10px_rgba(0,240,255,0.2)]'
+                    : 'text-slate-400 hover:text-slate-200'
                 }`}
-                title="Edit"
+                title="Edit Source"
               >
                 <Edit3 className="w-3.5 h-3.5" />
               </button>
               <button
                 onClick={() => setEditorSubMode('preview')}
-                className={`p-1.5 rounded ${
+                className={`p-1.5 rounded-lg transition-all ${
                   editorSubMode === 'preview'
-                    ? 'bg-cyan-500/20 text-cyan-300'
-                    : 'text-slate-400'
+                    ? 'bg-cyan-500/20 text-cyan-300 shadow-[0_0_10px_rgba(0,240,255,0.2)]'
+                    : 'text-slate-400 hover:text-slate-200'
                 }`}
-                title="Preview"
+                title="Rendered Preview"
               >
                 <Eye className="w-3.5 h-3.5" />
               </button>
               <button
                 onClick={() => setEditorSubMode('reading')}
-                className={`p-1.5 rounded ${
+                className={`p-1.5 rounded-lg transition-all ${
                   editorSubMode === 'reading'
-                    ? 'bg-cyan-500/20 text-cyan-300'
-                    : 'text-slate-400'
+                    ? 'bg-cyan-500/20 text-cyan-300 shadow-[0_0_10px_rgba(0,240,255,0.2)]'
+                    : 'text-slate-400 hover:text-slate-200'
                 }`}
-                title="Reading"
+                title="Distraction-Free Reading Mode"
               >
                 <BookOpen className="w-3.5 h-3.5" />
               </button>
@@ -284,7 +432,7 @@ export const MobileApp: React.FC = () => {
             {/* Share Sheet */}
             <button
               onClick={handleShare}
-              className="p-2 text-slate-300 hover:text-cyan-300 active:bg-cyan-500/20 rounded-lg"
+              className="p-2 text-slate-300 hover:text-cyan-300 active:bg-cyan-500/20 rounded-xl transition-all cursor-pointer"
               title="Share Document"
             >
               <Share2 className="w-4 h-4" />
@@ -293,10 +441,29 @@ export const MobileApp: React.FC = () => {
         )}
       </header>
 
-      {/* 2. Main Content Area according to activeTab */}
-      <main className="flex-1 overflow-hidden relative">
+      {/* ── 2. Main Content Area ── */}
+      <main className="flex-1 overflow-hidden relative flex flex-col">
+        {/* OPEN FILE MENU / DOCUMENT HUB (Default Landing Page) */}
+        {activeTab === 'home' && (
+          <MobileOpenFileMenu
+            docs={docs}
+            activeDocId={activeDocId}
+            onSelectDoc={(id) => {
+              setActiveDocId(id);
+              setActiveTab('editor');
+            }}
+            onOpenFile={handleOpenFile}
+            onNewDoc={handleNewDoc}
+            onDeleteDoc={handleDeleteDoc}
+            onResumeDoc={() => setActiveTab('editor')}
+            onOpenAbout={() => setIsAboutOpen(true)}
+            onOpenSettings={() => setActiveTab('settings')}
+          />
+        )}
+
+        {/* EDITOR TAB */}
         {activeTab === 'editor' && (
-          <div className="flex flex-col h-full overflow-hidden">
+          <div className="flex flex-col h-full overflow-hidden animate-fade-in">
             <div className="flex-1 overflow-hidden">
               {editorSubMode === 'reading' ? (
                 <ReadingMode
@@ -329,67 +496,19 @@ export const MobileApp: React.FC = () => {
           </div>
         )}
 
-        {activeTab === 'home' && (
-          <div className="p-5 overflow-y-auto h-full space-y-5">
+        {/* RECENT FILES TAB */}
+        {activeTab === 'recent' && (
+          <div className="p-4 h-full flex flex-col space-y-4 animate-fade-in">
             <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-xl font-bold text-white">KnowTheMD Mobile</h2>
-                <p className="text-xs text-slate-400">Read. Write. Understand Markdown.</p>
-              </div>
-              <BrandLogo size={36} />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                onClick={handleNewDoc}
-                className="p-4 rounded-2xl bg-slate-900/80 border border-cyan-500/20 flex flex-col items-center justify-center text-center gap-2 active:bg-cyan-500/15 transition-colors cursor-pointer"
-              >
-                <FilePlus className="w-6 h-6 text-cyan-400" />
-                <span className="text-xs font-semibold text-white">New Document</span>
-              </button>
-              <button
-                onClick={handleOpenFile}
-                className="p-4 rounded-2xl bg-slate-900/80 border border-cyan-500/20 flex flex-col items-center justify-center text-center gap-2 active:bg-cyan-500/15 transition-colors cursor-pointer"
-              >
-                <FolderOpen className="w-6 h-6 text-sky-400" />
-                <span className="text-xs font-semibold text-white">Open File</span>
-              </button>
-            </div>
-
-            {/* Document Metrics Card */}
-            <GlassCard>
-              <div className="text-xs font-semibold text-cyan-400 mb-2 flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5" /> Current Document Stats
-              </div>
-              <div className="grid grid-cols-3 gap-2 text-center text-xs">
-                <div className="p-2 rounded-xl bg-slate-950/60">
-                  <div className="text-base font-bold text-white">{stats.words}</div>
-                  <div className="text-[10px] text-slate-400">Words</div>
-                </div>
-                <div className="p-2 rounded-xl bg-slate-950/60">
-                  <div className="text-base font-bold text-white">{stats.lines}</div>
-                  <div className="text-[10px] text-slate-400">Lines</div>
-                </div>
-                <div className="p-2 rounded-xl bg-slate-950/60">
-                  <div className="text-base font-bold text-white">{stats.readingTimeMinutes}m</div>
-                  <div className="text-[10px] text-slate-400">Read Time</div>
-                </div>
-              </div>
-            </GlassCard>
-          </div>
-        )}
-
-        {activeTab === 'files' && (
-          <div className="p-4 h-full flex flex-col">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-semibold uppercase text-cyan-400 tracking-wider">
-                My Documents ({docs.length})
-              </h3>
-              <GlassButton variant="primary" size="sm" icon={<FilePlus className="w-3.5 h-3.5" />} onClick={handleNewDoc}>
+              <h2 className="text-sm font-semibold uppercase text-cyan-400 tracking-wider flex items-center gap-2">
+                <Clock className="w-4 h-4" /> Recently Modified ({docs.length})
+              </h2>
+              <GlassButton variant="primary" size="sm" icon={<FilePlus className="w-3.5 h-3.5" />} onClick={() => handleNewDoc()}>
                 New
               </GlassButton>
             </div>
-            <div className="flex-1 overflow-y-auto space-y-2">
+
+            <div className="flex-1 overflow-y-auto space-y-2.5">
               {docs.map((doc) => (
                 <div
                   key={doc.id}
@@ -397,17 +516,17 @@ export const MobileApp: React.FC = () => {
                     setActiveDocId(doc.id);
                     setActiveTab('editor');
                   }}
-                  className={`flex items-center justify-between p-3 rounded-xl border text-xs cursor-pointer transition-colors ${
+                  className={`flex items-center justify-between p-3.5 rounded-2xl border text-xs cursor-pointer active:scale-[0.98] transition-all ${
                     doc.id === activeDocId
-                      ? 'bg-cyan-500/20 border-cyan-400 text-cyan-300 shadow-[0_0_12px_rgba(0,240,255,0.15)]'
-                      : 'bg-slate-900/60 border-cyan-500/10 text-slate-300'
+                      ? 'bg-cyan-500/20 border-cyan-400/50 text-cyan-300 shadow-[0_0_15px_rgba(0,240,255,0.12)]'
+                      : 'bg-slate-900/60 border-cyan-500/10 text-slate-300 hover:border-cyan-500/30'
                   }`}
                 >
-                  <div className="flex items-center gap-2.5 truncate">
+                  <div className="flex items-center gap-3 truncate">
                     <FileText className="w-4 h-4 text-cyan-400 shrink-0" />
-                    <span className="font-medium truncate">{doc.name}</span>
+                    <span className="font-semibold truncate">{doc.name}</span>
                   </div>
-                  <span className="text-[10px] text-slate-500">
+                  <span className="text-[10px] text-slate-500 shrink-0">
                     {new Date(doc.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </span>
                 </div>
@@ -416,57 +535,32 @@ export const MobileApp: React.FC = () => {
           </div>
         )}
 
-        {activeTab === 'recent' && (
-          <div className="p-4 h-full flex flex-col">
-            <h3 className="text-sm font-semibold uppercase text-cyan-400 tracking-wider mb-4 flex items-center gap-2">
-              <Clock className="w-4 h-4" /> Recently Modified
-            </h3>
-            <div className="space-y-2">
-              {docs.map((doc) => (
-                <div
-                  key={doc.id}
-                  onClick={() => {
-                    setActiveDocId(doc.id);
-                    setActiveTab('editor');
-                  }}
-                  className="flex items-center justify-between p-3 rounded-xl bg-slate-900/60 border border-cyan-500/10 text-xs cursor-pointer"
-                >
-                  <div className="flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-slate-400" />
-                    <span>{doc.name}</span>
-                  </div>
-                  <span className="text-[10px] text-slate-500">Just now</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
+        {/* SETTINGS TAB */}
         {activeTab === 'settings' && (
-          <div className="p-5 overflow-y-auto h-full space-y-4 text-xs text-slate-300">
-            <h3 className="text-base font-bold text-white mb-2">Mobile Settings</h3>
+          <div className="p-5 overflow-y-auto h-full space-y-4 text-xs text-slate-300 animate-fade-in pb-24">
+            <h2 className="text-base font-bold text-white mb-2">Mobile Settings</h2>
             <div className="space-y-3">
-              <div className="flex items-center justify-between p-3 rounded-xl bg-slate-900/60 border border-cyan-500/15">
-                <span>Font Size ({fontSize}px)</span>
+              <div className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-900/60 border border-cyan-500/15">
+                <span className="font-semibold text-white">Font Size ({fontSize}px)</span>
                 <input
                   type="range"
                   min="13"
-                  max="20"
+                  max="22"
                   value={fontSize}
                   onChange={(e) => setFontSize(Number(e.target.value))}
-                  className="accent-cyan-400"
+                  className="accent-cyan-400 cursor-pointer"
                 />
               </div>
 
-              <div className="flex items-center justify-between p-3 rounded-xl bg-slate-900/60 border border-cyan-500/15">
-                <span>Theme</span>
+              <div className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-900/60 border border-cyan-500/15">
+                <span className="font-semibold text-white">Theme</span>
                 <span className="px-3 py-1 rounded-lg bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 text-xs font-semibold">
-                  Liquid Dark (Exclusive)
+                  Liquid Dark (Official)
                 </span>
               </div>
 
               {/* OTA Updates Section */}
-              <div className="p-4 rounded-xl bg-slate-900/60 border border-cyan-500/20 space-y-3">
+              <div className="p-4 rounded-2xl bg-slate-900/60 border border-cyan-500/20 space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="font-semibold text-white">Over-The-Air Updates</span>
                   <span className="text-[10px] text-emerald-400 font-semibold bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-400/20">
@@ -479,7 +573,7 @@ export const MobileApp: React.FC = () => {
                 </div>
 
                 {updateChecker.state === 'available' ? (
-                  <div className="p-3 rounded-lg bg-cyan-500/15 border border-cyan-400/30 space-y-2">
+                  <div className="p-3 rounded-xl bg-cyan-500/15 border border-cyan-400/30 space-y-2">
                     <p className="text-xs font-semibold text-cyan-200">
                       New version v{updateChecker.latestVersion} is available!
                     </p>
@@ -515,7 +609,7 @@ export const MobileApp: React.FC = () => {
               </div>
 
               {/* Play Store Style About Card */}
-              <div className="p-4 rounded-xl bg-gradient-to-br from-slate-900/90 to-slate-950/90 border border-cyan-500/20 space-y-2">
+              <div className="p-4 rounded-2xl bg-gradient-to-br from-slate-900/90 to-slate-950/90 border border-cyan-500/20 space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="font-semibold text-white flex items-center gap-1.5">
                     <Info className="w-4 h-4 text-cyan-400" />
@@ -528,7 +622,7 @@ export const MobileApp: React.FC = () => {
                 </p>
                 <button
                   onClick={() => setIsAboutOpen(true)}
-                  className="w-full mt-2 py-2 rounded-xl bg-cyan-500/15 border border-cyan-400/30 text-cyan-300 text-xs font-semibold hover:bg-cyan-500/25 active:scale-98 transition-all cursor-pointer"
+                  className="w-full mt-2 py-2 rounded-xl bg-cyan-500/15 border border-cyan-400/30 text-cyan-300 text-xs font-semibold hover:bg-cyan-500/25 active:scale-[0.98] transition-all cursor-pointer"
                 >
                   View App Info (Play Store Style) &rarr;
                 </button>
@@ -538,17 +632,17 @@ export const MobileApp: React.FC = () => {
         )}
       </main>
 
-      {/* 3. Bottom Touch Navigation Bar */}
+      {/* ── 3. Bottom Touch Navigation Bar ── */}
       <MobileBottomNav activeTab={activeTab} onSelectTab={setActiveTab} />
 
-      {/* 4. Play Store Style About Modal */}
+      {/* ── 4. Play Store Style About Modal ── */}
       <AboutAppModal
         isOpen={isAboutOpen}
         onClose={() => setIsAboutOpen(false)}
         onCheckUpdates={updateChecker.check}
       />
 
-      {/* 5. Floating Feedback Toast */}
+      {/* ── 5. Floating Feedback Toast ── */}
       {mobileToast && (
         <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-slate-900/95 border border-cyan-500/40 rounded-full shadow-[0_8px_25px_rgba(0,0,0,0.6),0_0_15px_rgba(0,240,255,0.2)] text-xs text-white flex items-center gap-2 animate-fade-in pointer-events-none">
           <Check className="w-3.5 h-3.5 text-emerald-400" />
@@ -558,4 +652,3 @@ export const MobileApp: React.FC = () => {
     </div>
   );
 };
-

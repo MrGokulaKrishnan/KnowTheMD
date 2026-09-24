@@ -28,6 +28,7 @@ import {
 import { Sidebar } from './components/Sidebar';
 import { Toolbar, WorkspaceMode } from './components/Toolbar';
 import { StatusBar } from './components/StatusBar';
+import { OpenFileMenu } from './components/OpenFileMenu';
 import { SettingsModal, EditorSettings } from './components/SettingsModal';
 import { DiagnosticLogModal } from './components/DiagnosticLogModal';
 import { UpdateBanner } from './components/UpdateBanner';
@@ -92,6 +93,9 @@ export const App: React.FC = () => {
 
   // Workspace Mode: edit | preview | split | reading
   const [mode, setMode] = useState<WorkspaceMode>('split');
+
+  // Start at Open File Menu / Dashboard on application launch
+  const [isFileMenuOpen, setIsFileMenuOpen] = useState(true);
 
   // Sidebar & Outline visibility
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -175,16 +179,17 @@ export const App: React.FC = () => {
     );
   }, [activeDocId]);
 
-  const handleNewDoc = () => {
+  const handleNewDoc = (initialContent?: string, name?: string) => {
     const newId = `doc_${Date.now()}`;
     const newDoc: DocumentItem = {
       id: newId,
-      name: `Untitled-${docs.length + 1}.md`,
-      content: '# Untitled Document\n\n',
+      name: name || `Untitled-${docs.length + 1}.md`,
+      content: initialContent !== undefined ? initialContent : '# Untitled Document\n\n',
       isDirty: false,
     };
     setDocs((prev) => [...prev, newDoc]);
     setActiveDocId(newId);
+    setIsFileMenuOpen(false);
     addToast('info', 'Created new Markdown document');
   };
 
@@ -203,9 +208,21 @@ export const App: React.FC = () => {
       setDocs((prev) => [...prev, newDoc]);
       setActiveDocId(newId);
       setRecentFiles(getRecentFiles());
+      setIsFileMenuOpen(false);
       addToast('success', `Opened ${fileData.name}`);
     } catch (err: any) {
       addToast('error', err.message || "Couldn't open file");
+    }
+  };
+
+  const handleOpenRecent = (item: RecentItem) => {
+    const existing = docs.find((d) => d.name === item.name);
+    if (existing) {
+      setActiveDocId(existing.id);
+      setIsFileMenuOpen(false);
+      addToast('info', `Switched to ${item.name}`);
+    } else {
+      handleOpenFile();
     }
   };
 
@@ -273,23 +290,10 @@ export const App: React.FC = () => {
     setPendingCloseId(null);
   };
 
-  // Logo click: Navigate to homepage / welcome document
+  // Logo click: Navigate to Open File Menu / Workspace
   const handleGoHome = () => {
-    const welcomeDoc = docs.find((d) => d.id === 'doc_welcome');
-    if (!welcomeDoc) {
-      const restoredWelcome: DocumentItem = {
-        id: 'doc_welcome',
-        name: 'Welcome.md',
-        content: DEFAULT_DOC_CONTENT,
-        isDirty: false,
-      };
-      setDocs((prev) => [restoredWelcome, ...prev]);
-      setActiveDocId('doc_welcome');
-    } else {
-      setActiveDocId('doc_welcome');
-    }
-    setMode('split');
-    addToast('info', 'Welcome to KnowTheMD Homepage! Click Open File or New File to start.', 'Homepage');
+    setIsFileMenuOpen(true);
+    addToast('info', 'Switched to Workspace File Menu', 'Workspace');
   };
 
   // Export handlers
@@ -437,6 +441,7 @@ export const App: React.FC = () => {
     { id: 'toggle_outline', title: 'Toggle Outline', category: 'View', perform: () => setIsOutlineOpen((o) => !o) },
     { id: 'export_pdf', title: 'Export to PDF', category: 'Export', perform: () => handleExport('pdf') },
     { id: 'export_html', title: 'Export Standalone HTML', category: 'Export', perform: () => handleExport('html') },
+    { id: 'open_file_menu', title: 'Open File Menu / Start Workspace', category: 'File', shortcut: 'Ctrl+H', perform: () => setIsFileMenuOpen(true) },
     { id: 'settings', title: 'Open Preferences', category: 'General', perform: () => setIsSettingsOpen(true) },
     { id: 'diagnostics', title: 'View Diagnostic Logs', category: 'Diagnostics', perform: () => setIsDiagnosticsOpen(true) },
     { id: 'about', title: 'About KnowTheMD (Play Store Info)', category: 'General', perform: () => setIsAboutOpen(true) },
@@ -459,16 +464,16 @@ export const App: React.FC = () => {
         onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
         openDocs={docs}
         activeDocId={activeDocId}
-        onSelectDoc={(id) => setActiveDocId(id)}
+        onSelectDoc={(id) => {
+          setActiveDocId(id);
+          setIsFileMenuOpen(false);
+        }}
         onCloseDoc={handleCloseTab}
-        onNewDoc={handleNewDoc}
+        onNewDoc={() => handleNewDoc()}
         onOpenFile={handleOpenFile}
         onOpenFolder={handleOpenFile}
         recentFiles={recentFiles}
-        onOpenRecent={(r) => {
-          // Open recent document
-          addToast('info', `Opening ${r.name}`);
-        }}
+        onOpenRecent={handleOpenRecent}
         onOpenSettings={() => setIsSettingsOpen(true)}
         onOpenDiagnostics={() => setIsDiagnosticsOpen(true)}
         onOpenAbout={() => setIsAboutOpen(true)}
@@ -493,68 +498,88 @@ export const App: React.FC = () => {
           onSearch={() => setIsSearchOpen(true)}
           onCommandPalette={() => setIsPaletteOpen(true)}
           onExport={handleExport}
+          onOpenFileMenu={() => setIsFileMenuOpen((prev) => !prev)}
+          isFileMenuOpen={isFileMenuOpen}
         />
 
-        {/* TabBar (hidden in reading mode) */}
+        {/* TabBar (hidden in reading mode or when in open file menu) */}
         {mode !== 'reading' && (
           <GlassTabs
             tabs={tabs}
             activeId={activeDocId}
-            onSelect={setActiveDocId}
+            onSelect={(id) => {
+              setActiveDocId(id);
+              setIsFileMenuOpen(false);
+            }}
             onClose={handleCloseTab}
-            onNewTab={handleNewDoc}
+            onNewTab={() => handleNewDoc()}
           />
         )}
 
-        {/* Editor / Preview Area with Right Outline */}
+        {/* Editor / Preview Area with Right Outline or Open File Menu */}
         <div className="relative flex-1 flex overflow-hidden">
-          <div className="flex-1 h-full overflow-hidden">
-            {mode === 'reading' ? (
-              <ReadingMode
-                content={activeDoc.content}
-                onExit={() => setMode('split')}
-              />
-            ) : mode === 'split' ? (
-              <SplitView
-                content={activeDoc.content}
-                onChange={handleContentChange}
-                textareaRef={textareaRef}
-                fontSize={settings.fontSize}
-                lineHeight={settings.lineHeight}
-                wordWrap={settings.wordWrap}
-                showLineNumbers={settings.lineNumbers}
-                onSave={handleSave}
-                onSearch={() => setIsSearchOpen(true)}
-                onCommandPalette={() => setIsPaletteOpen(true)}
-              />
-            ) : mode === 'preview' ? (
-              <Preview content={activeDoc.content} />
-            ) : (
-              <Editor
-                content={activeDoc.content}
-                onChange={handleContentChange}
-                textareaRef={textareaRef}
-                fontSize={settings.fontSize}
-                lineHeight={settings.lineHeight}
-                wordWrap={settings.wordWrap}
-                showLineNumbers={settings.lineNumbers}
-                onSave={handleSave}
-                onSearch={() => setIsSearchOpen(true)}
-                onCommandPalette={() => setIsPaletteOpen(true)}
-              />
-            )}
-          </div>
+          {isFileMenuOpen ? (
+            <OpenFileMenu
+              onOpenFile={handleOpenFile}
+              onOpenFolder={handleOpenFile}
+              onNewDoc={(content, name) => handleNewDoc(content, name)}
+              recentFiles={recentFiles}
+              onOpenRecent={handleOpenRecent}
+              activeDoc={activeDoc}
+              onGoToEditor={() => setIsFileMenuOpen(false)}
+              onOpenAbout={() => setIsAboutOpen(true)}
+            />
+          ) : (
+            <>
+              <div className="flex-1 h-full overflow-hidden">
+                {mode === 'reading' ? (
+                  <ReadingMode
+                    content={activeDoc.content}
+                    onExit={() => setMode('split')}
+                  />
+                ) : mode === 'split' ? (
+                  <SplitView
+                    content={activeDoc.content}
+                    onChange={handleContentChange}
+                    textareaRef={textareaRef}
+                    fontSize={settings.fontSize}
+                    lineHeight={settings.lineHeight}
+                    wordWrap={settings.wordWrap}
+                    showLineNumbers={settings.lineNumbers}
+                    onSave={handleSave}
+                    onSearch={() => setIsSearchOpen(true)}
+                    onCommandPalette={() => setIsPaletteOpen(true)}
+                  />
+                ) : mode === 'preview' ? (
+                  <Preview content={activeDoc.content} />
+                ) : (
+                  <Editor
+                    content={activeDoc.content}
+                    onChange={handleContentChange}
+                    textareaRef={textareaRef}
+                    fontSize={settings.fontSize}
+                    lineHeight={settings.lineHeight}
+                    wordWrap={settings.wordWrap}
+                    showLineNumbers={settings.lineNumbers}
+                    onSave={handleSave}
+                    onSearch={() => setIsSearchOpen(true)}
+                    onCommandPalette={() => setIsPaletteOpen(true)}
+                  />
+                )}
+              </div>
 
-          {/* Collapsible Right Outline Sidebar */}
-          {isOutlineOpen && mode !== 'reading' && (
-            <aside className="w-64 h-full shrink-0 bg-slate-950/80 backdrop-blur-xl border-l border-cyan-500/15 flex flex-col z-20 overflow-hidden">
-              <div className="px-4 py-3 border-b border-cyan-500/10 text-xs font-semibold uppercase tracking-wider text-cyan-400">
-                Document Outline
-              </div>
-              <div className="flex-1 overflow-y-auto p-2 no-scrollbar">
-                <Outline content={activeDoc.content} />
-              </div>
-            </aside>
+              {/* Collapsible Right Outline Sidebar */}
+              {isOutlineOpen && mode !== 'reading' && (
+                <aside className="w-64 h-full shrink-0 bg-slate-950/80 backdrop-blur-xl border-l border-cyan-500/15 flex flex-col z-20 overflow-hidden">
+                  <div className="px-4 py-3 border-b border-cyan-500/10 text-xs font-semibold uppercase tracking-wider text-cyan-400">
+                    Document Outline
+                  </div>
+                  <div className="flex-1 overflow-y-auto p-2 no-scrollbar">
+                    <Outline content={activeDoc.content} />
+                  </div>
+                </aside>
+              )}
+            </>
           )}
 
           {/* Floating Search & Replace Bar */}

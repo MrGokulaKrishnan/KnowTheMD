@@ -19,6 +19,7 @@ import {
   ListTree,
   Maximize2,
   FileDown,
+  FolderOpen,
 } from 'lucide-react';
 
 export type WorkspaceMode = 'edit' | 'preview' | 'split' | 'reading';
@@ -34,6 +35,8 @@ export interface ToolbarProps {
   onSearch: () => void;
   onCommandPalette: () => void;
   onExport: (format: 'pdf' | 'html' | 'txt' | 'md') => void;
+  onOpenFileMenu?: () => void;
+  isFileMenuOpen?: boolean;
   lightMode?: boolean;
   onToggleTheme?: () => void;
 }
@@ -49,6 +52,8 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   onSearch,
   onCommandPalette,
   onExport,
+  onOpenFileMenu,
+  isFileMenuOpen,
 }) => {
   const exportItems: DropdownItem[] = [
     {
@@ -93,6 +98,21 @@ export const Toolbar: React.FC<ToolbarProps> = ({
         >
           <SidebarIcon className="w-4 h-4" />
         </button>
+
+        {onOpenFileMenu && (
+          <button
+            onClick={onOpenFileMenu}
+            className={`px-2.5 py-1 rounded-lg border text-xs flex items-center gap-1.5 transition-all font-medium ${
+              isFileMenuOpen
+                ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30 shadow-[0_0_10px_rgba(0,240,255,0.2)]'
+                : 'text-slate-400 hover:text-white border-transparent hover:bg-slate-800'
+            }`}
+            title="Open File Menu / Start Workspace"
+          >
+            <FolderOpen className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Files</span>
+          </button>
+        )}
 
         <div className="h-4 w-px bg-cyan-500/15 mx-1" />
 
