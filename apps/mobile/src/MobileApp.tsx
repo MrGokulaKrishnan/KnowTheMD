@@ -138,9 +138,13 @@ export const MobileApp: React.FC = () => {
     setTimeout(() => setMobileToast(null), 2800);
   };
 
+  const docsRef = useRef<MobileDoc[]>(docs);
+  docsRef.current = docs;
+
   // Open a document directly into the editor
   const openDocumentDirectly = useCallback((fileName: string, content: string) => {
-    const existing = docs.find((d) => d.name === fileName);
+    const currentDocs = docsRef.current;
+    const existing = currentDocs.find((d) => d.name === fileName);
     if (existing) {
       // Update existing content
       setDocs((prev) =>
@@ -148,20 +152,20 @@ export const MobileApp: React.FC = () => {
       );
       setActiveDocId(existing.id);
     } else {
-      const newId = `doc_${Date.now()}`;
+      const newId = `doc_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
       const newDoc: MobileDoc = {
         id: newId,
         name: fileName,
-        content,
+        content: content ?? '',
         updatedAt: Date.now(),
       };
       setDocs((prev) => [newDoc, ...prev]);
       setActiveDocId(newId);
     }
     setActiveTab('editor');
-    setEditorSubMode('preview');
+    setEditorSubMode('edit');
     showToast(`Opened ${fileName}`);
-  }, [docs]);
+  }, []);
 
   // Check for file passed from Android Intent ("Open with KnowTheMD")
   const checkAndroidPendingFile = useCallback(() => {
@@ -170,7 +174,7 @@ export const MobileApp: React.FC = () => {
         const raw = window.AndroidFileOpener.getPendingFile();
         if (raw) {
           const payload = JSON.parse(raw);
-          if (payload && payload.hasFile && payload.content) {
+          if (payload && payload.hasFile && typeof payload.content === 'string') {
             const fileName = payload.name || 'Opened_Document.md';
             openDocumentDirectly(fileName, payload.content);
             window.AndroidFileOpener.clearPendingFile();
@@ -194,7 +198,7 @@ export const MobileApp: React.FC = () => {
     window.onAndroidFileOpened = (payloadStr: string) => {
       try {
         const payload = typeof payloadStr === 'string' ? JSON.parse(payloadStr) : payloadStr;
-        if (payload && payload.hasFile && payload.content) {
+        if (payload && payload.hasFile && typeof payload.content === 'string') {
           const fileName = payload.name || 'Opened_Document.md';
           openDocumentDirectly(fileName, payload.content);
           if (window.AndroidFileOpener) {

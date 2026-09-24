@@ -25,9 +25,16 @@ if (!gotTheLock) {
 
 // ─── Platform & Display Optimization ─────────────────────────────────────────
 if (process.platform === 'win32') {
+  // Disable native window occlusion calculation to prevent blank/black windows on Windows 10/11
+  app.commandLine.appendSwitch('disable-features', 'CalculateNativeWinOcclusion');
   app.commandLine.appendSwitch('enable-font-antialiasing');
   app.commandLine.appendSwitch('high-dpi-support', '1');
 }
+
+// Handle child / GPU process gone gracefully so the main window continues rendering
+app.on('child-process-gone', (_event, details) => {
+  console.warn('[Electron] Child process gone:', details.type, details.reason);
+});
 
 // ─── Native File Association Helpers ─────────────────────────────────────────
 function extractFilePathFromArgs(argv) {
@@ -137,11 +144,8 @@ function createWindow() {
 
   // Gracefully show window once renderer is ready
   mainWindow.once('ready-to-show', () => {
-    if (mainWindow && !mainWindow.isDestroyed()) {
+    if (mainWindow && !mainWindow.isDestroyed() && !mainWindow.isVisible()) {
       mainWindow.show();
-      if (pendingFilePayload) {
-        mainWindow.webContents.send('file-opened', pendingFilePayload);
-      }
     }
     if (autoUpdater) {
       setTimeout(() => {
@@ -154,12 +158,19 @@ function createWindow() {
     }
   });
 
-  // Fallback timer ensures window is displayed even if ready-to-show is delayed
+  // Also ensure window is displayed once content finishes loading
+  mainWindow.webContents.on('did-finish-load', () => {
+    if (mainWindow && !mainWindow.isDestroyed() && !mainWindow.isVisible()) {
+      mainWindow.show();
+    }
+  });
+
+  // Fallback timer ensures window is displayed even if events are delayed
   setTimeout(() => {
     if (mainWindow && !mainWindow.isDestroyed() && !mainWindow.isVisible()) {
       mainWindow.show();
     }
-  }, 2000);
+  }, 1000);
 
   // Diagnostics and recovery listeners
   mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {

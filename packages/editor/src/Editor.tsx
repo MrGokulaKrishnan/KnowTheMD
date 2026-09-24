@@ -31,7 +31,7 @@ export const Editor: React.FC<EditorProps> = ({
 }) => {
   // Generate line numbers array
   const lineCount = useMemo(() => {
-    return content.split('\n').length;
+    return (content || '').split('\n').length;
   }, [content]);
 
   // Handle Tab key and auto-closing brackets
@@ -133,7 +133,7 @@ export const Editor: React.FC<EditorProps> = ({
       {/* Main text area */}
       <textarea
         ref={textareaRef}
-        value={content}
+        value={content ?? ''}
         onChange={(e) => onChange(e.target.value, e.target.selectionStart)}
         onKeyDown={handleKeyDown}
         spellCheck="false"

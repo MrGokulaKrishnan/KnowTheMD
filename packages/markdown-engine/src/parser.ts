@@ -21,6 +21,7 @@ export interface ParseResult {
 }
 
 export function parseFrontMatter(markdown: string): { frontMatter?: Record<string, string>; content: string } {
+  if (!markdown || typeof markdown !== 'string') return { content: '' };
   const match = markdown.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n([\s\S]*)$/);
   if (!match) return { content: markdown };
 

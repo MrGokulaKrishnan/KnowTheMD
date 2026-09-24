@@ -160,29 +160,33 @@ export const App: React.FC = () => {
 
   const activeDoc = docs.find((d) => d.id === activeDocId) || docs[0];
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const docsRef = useRef<DocumentItem[]>(docs);
+  docsRef.current = docs;
 
   const handleLoadExternalFile = useCallback((name: string, content: string, filePath?: string) => {
-    setDocs((prev) => {
-      const existing = prev.find((d) => (filePath && d.path === filePath) || d.name === name);
-      if (existing) {
-        setActiveDocId(existing.id);
-        setIsFileMenuOpen(false);
-        addToast('info', `Switched to ${name}`);
-        return prev;
-      }
-      const newId = `doc_${Date.now()}`;
+    const currentDocs = docsRef.current;
+    const existing = currentDocs.find((d) => (filePath && d.path === filePath) || d.name === name);
+    if (existing) {
+      setDocs((prev) =>
+        prev.map((d) => (d.id === existing.id ? { ...d, content, isDirty: false } : d))
+      );
+      setActiveDocId(existing.id);
+      setIsFileMenuOpen(false);
+      addToast('info', `Switched to ${name}`);
+    } else {
+      const newId = `doc_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
       const newDoc: DocumentItem = {
         id: newId,
         name,
         path: filePath,
-        content,
+        content: content ?? '',
         isDirty: false,
       };
+      setDocs((prev) => [newDoc, ...prev]);
       setActiveDocId(newId);
       setIsFileMenuOpen(false);
       addToast('success', `Opened ${name}`);
-      return [newDoc, ...prev];
-    });
+    }
     addRecentFile(name, filePath);
     setRecentFiles(getRecentFiles());
   }, []);
@@ -207,14 +211,14 @@ export const App: React.FC = () => {
       window.electronFileOpener
         .getInitialFile()
         .then((file) => {
-          if (file && file.content) {
+          if (file && typeof file.content === 'string') {
             handleLoadExternalFile(file.name, file.content, file.path);
           }
         })
         .catch((e) => console.warn('[App] getInitialFile error:', e));
 
       const unsubscribe = window.electronFileOpener.onFileOpened((file) => {
-        if (file && file.content) {
+        if (file && typeof file.content === 'string') {
           handleLoadExternalFile(file.name, file.content, file.path);
         }
       });

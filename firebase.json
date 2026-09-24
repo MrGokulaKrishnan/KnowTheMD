@@ -18,7 +18,7 @@
           { "key": "Content-Type", "value": "application/vnd.android.package-archive" },
           { "key": "Content-Disposition", "value": "attachment; filename=\"KnowTheMD-v1.0-android.apk\"" },
           { "key": "X-Content-Type-Options", "value": "nosniff" },
-          { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" },
+          { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" },
           { "key": "Accept-Ranges", "value": "bytes" }
         ]
       },
@@ -28,7 +28,7 @@
           { "key": "Content-Type", "value": "application/vnd.android.package-archive" },
           { "key": "Content-Disposition", "value": "attachment; filename=\"KnowTheMD-v1.0-android.apk\"" },
           { "key": "X-Content-Type-Options", "value": "nosniff" },
-          { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" },
+          { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" },
           { "key": "Accept-Ranges", "value": "bytes" }
         ]
       },
@@ -38,7 +38,7 @@
           { "key": "Content-Type", "value": "application/vnd.android.package-archive" },
           { "key": "Content-Disposition", "value": "attachment; filename=\"KnowTheMD-1.0.0-android.apk\"" },
           { "key": "X-Content-Type-Options", "value": "nosniff" },
-          { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" },
+          { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" },
           { "key": "Accept-Ranges", "value": "bytes" }
         ]
       },
@@ -48,7 +48,7 @@
           { "key": "Content-Type", "value": "application/vnd.android.package-archive" },
           { "key": "Content-Disposition", "value": "attachment; filename=\"KnowTheMD-1.0.0-android.apk\"" },
           { "key": "X-Content-Type-Options", "value": "nosniff" },
-          { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" },
+          { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" },
           { "key": "Accept-Ranges", "value": "bytes" }
         ]
       },
@@ -58,7 +58,7 @@
           { "key": "Content-Type", "value": "application/vnd.microsoft.portable-executable" },
           { "key": "Content-Disposition", "value": "attachment; filename=\"KnowTheMD_Windows_x64_Setup.exe\"" },
           { "key": "X-Content-Type-Options", "value": "nosniff" },
-          { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" },
+          { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" },
           { "key": "Accept-Ranges", "value": "bytes" }
         ]
       },
@@ -68,7 +68,7 @@
           { "key": "Content-Type", "value": "application/vnd.microsoft.portable-executable" },
           { "key": "Content-Disposition", "value": "attachment; filename=\"KnowTheMD_Windows_x64_Setup.exe\"" },
           { "key": "X-Content-Type-Options", "value": "nosniff" },
-          { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" },
+          { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" },
           { "key": "Accept-Ranges", "value": "bytes" }
         ]
       },
@@ -78,7 +78,7 @@
           { "key": "Content-Type", "value": "application/vnd.microsoft.portable-executable" },
           { "key": "Content-Disposition", "value": "attachment; filename=\"KnowTheMD_Windows_ARM64_Setup.exe\"" },
           { "key": "X-Content-Type-Options", "value": "nosniff" },
-          { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" },
+          { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" },
           { "key": "Accept-Ranges", "value": "bytes" }
         ]
       },
@@ -88,7 +88,7 @@
           { "key": "Content-Type", "value": "application/vnd.microsoft.portable-executable" },
           { "key": "Content-Disposition", "value": "attachment; filename=\"KnowTheMD_Windows_ARM64_Setup.exe\"" },
           { "key": "X-Content-Type-Options", "value": "nosniff" },
-          { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" },
+          { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" },
           { "key": "Accept-Ranges", "value": "bytes" }
         ]
       },
@@ -98,7 +98,7 @@
           { "key": "Content-Type", "value": "application/octet-stream" },
           { "key": "Content-Disposition", "value": "attachment; filename=\"KnowTheMD-1.0.0.ipa\"" },
           { "key": "X-Content-Type-Options", "value": "nosniff" },
-          { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" },
+          { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" },
           { "key": "Accept-Ranges", "value": "bytes" }
         ]
       },
@@ -108,7 +108,7 @@
           { "key": "Content-Type", "value": "application/octet-stream" },
           { "key": "Content-Disposition", "value": "attachment; filename=\"KnowTheMD-1.0.0.ipa\"" },
           { "key": "X-Content-Type-Options", "value": "nosniff" },
-          { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" },
+          { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" },
           { "key": "Accept-Ranges", "value": "bytes" }
         ]
       },
@@ -117,7 +117,7 @@
         "headers": [
           { "key": "Content-Type", "value": "application/x-apple-aspen-config" },
           { "key": "Content-Disposition", "value": "attachment; filename=\"KnowTheMD-iOS.mobileconfig\"" },
-          { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" },
+          { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" },
           { "key": "Accept-Ranges", "value": "bytes" }
         ]
       },
@@ -127,7 +127,7 @@
           { "key": "Content-Type", "value": "application/zip" },
           { "key": "Content-Disposition", "value": "attachment" },
           { "key": "X-Content-Type-Options", "value": "nosniff" },
-          { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" },
+          { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" },
           { "key": "Accept-Ranges", "value": "bytes" }
         ]
       },
@@ -137,7 +137,7 @@
           { "key": "Content-Type", "value": "application/gzip" },
           { "key": "Content-Disposition", "value": "attachment" },
           { "key": "X-Content-Type-Options", "value": "nosniff" },
-          { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" },
+          { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" },
           { "key": "Accept-Ranges", "value": "bytes" }
         ]
       },
@@ -147,7 +147,7 @@
           { "key": "Content-Type", "value": "application/x-apple-diskimage" },
           { "key": "Content-Disposition", "value": "attachment" },
           { "key": "X-Content-Type-Options", "value": "nosniff" },
-          { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" },
+          { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" },
           { "key": "Accept-Ranges", "value": "bytes" }
         ]
       },
@@ -157,7 +157,7 @@
           { "key": "Content-Type", "value": "application/octet-stream" },
           { "key": "Content-Disposition", "value": "attachment" },
           { "key": "X-Content-Type-Options", "value": "nosniff" },
-          { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" },
+          { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" },
           { "key": "Accept-Ranges", "value": "bytes" }
         ]
       },
@@ -167,7 +167,7 @@
           { "key": "Content-Type", "value": "application/vnd.debian.binary-package" },
           { "key": "Content-Disposition", "value": "attachment" },
           { "key": "X-Content-Type-Options", "value": "nosniff" },
-          { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" },
+          { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" },
           { "key": "Accept-Ranges", "value": "bytes" }
         ]
       },

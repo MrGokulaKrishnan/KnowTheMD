@@ -33,10 +33,13 @@
                 <data android:mimeType="text/markdown" />
                 <data android:mimeType="text/x-markdown" />
                 <data android:mimeType="text/plain" />
+                <data android:mimeType="text/*" />
+                <data android:mimeType="application/x-markdown" />
+                <data android:mimeType="application/markdown" />
                 <data android:mimeType="text/x-web-markdown" />
             </intent-filter>
 
-            <!-- 2. Open Markdown files by extension (*.md, *.markdown, *.mdown, *.mkd, *.txt) -->
+            <!-- 2. Open via File Managers with generic octet-stream (content:// and file://) -->
             <intent-filter android:label="@string/app_name">
                 <action android:name="android.intent.action.VIEW" />
                 <action android:name="android.intent.action.EDIT" />
@@ -44,6 +47,18 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="content" />
                 <data android:scheme="file" />
+                <data android:mimeType="application/octet-stream" />
+            </intent-filter>
+
+            <!-- 3. Open Markdown files by extension on file:// and content:// with wildcard MIME -->
+            <intent-filter android:label="@string/app_name">
+                <action android:name="android.intent.action.VIEW" />
+                <action android:name="android.intent.action.EDIT" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="file" />
+                <data android:scheme="content" />
+                <data android:mimeType="*/*" />
                 <data android:host="*" />
                 <data android:pathPattern=".*\\.md" />
                 <data android:pathPattern=".*\\..*\\.md" />
@@ -55,29 +70,32 @@
                 <data android:pathPattern=".*\\..*\\.txt" />
             </intent-filter>
 
-            <!-- 3. Fallback for generic octet-stream with Markdown extensions -->
+            <!-- 4. Open without MIME type (fallback for file managers sending raw URI) -->
             <intent-filter android:label="@string/app_name">
                 <action android:name="android.intent.action.VIEW" />
                 <action android:name="android.intent.action.EDIT" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="content" />
                 <data android:scheme="file" />
-                <data android:mimeType="application/octet-stream" />
+                <data android:scheme="content" />
                 <data android:host="*" />
                 <data android:pathPattern=".*\\.md" />
                 <data android:pathPattern=".*\\..*\\.md" />
                 <data android:pathPattern=".*\\.markdown" />
                 <data android:pathPattern=".*\\..*\\.markdown" />
+                <data android:pathPattern=".*\\.mdown" />
+                <data android:pathPattern=".*\\.mkd" />
+                <data android:pathPattern=".*\\.txt" />
             </intent-filter>
 
-            <!-- 4. Support Share to KnowTheMD (ACTION_SEND) -->
+            <!-- 5. Support Share to KnowTheMD (ACTION_SEND) -->
             <intent-filter android:label="@string/app_name">
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="text/plain" />
                 <data android:mimeType="text/markdown" />
                 <data android:mimeType="text/x-markdown" />
+                <data android:mimeType="text/*" />
             </intent-filter>
 
         </activity>
